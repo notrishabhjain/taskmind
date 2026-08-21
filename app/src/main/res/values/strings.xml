@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TaskMind</string>
+    <string name="home_title">Welcome to TaskMind</string>
+    <string name="home_subtitle_empty">No tasks yet. Your mind is clear.</string>
+
+    <plurals name="home_task_count">
+        <item quantity="one">%d task waiting for you</item>
+        <item quantity="other">%d tasks waiting for you</item>
+    </plurals>
+</resources>
