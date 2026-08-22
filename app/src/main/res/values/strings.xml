@@ -58,7 +58,7 @@
     <string name="editor_tags">Tags</string>
     <string name="editor_tags_hint">Comma separated, e.g. home, errands</string>
     <string name="editor_save">Save</string>
-    <string name="editor_save_failed">Couldn&#39;t save your task. Please try again.</string>
+    <string name="editor_save_failed">"Couldn't save your task. Please try again."</string>
 
     <string name="cd_open_search">Search tasks</string>
     <string name="cd_close_search">Close search</string>
