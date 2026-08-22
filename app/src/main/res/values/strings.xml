@@ -1,11 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">TaskMind</string>
-    <string name="home_title">Welcome to TaskMind</string>
-    <string name="home_subtitle_empty">No tasks yet. Your mind is clear.</string>
 
-    <plurals name="home_task_count">
-        <item quantity="one">%d task waiting for you</item>
-        <item quantity="other">%d tasks waiting for you</item>
-    </plurals>
+    <string name="view_today">Today</string>
+    <string name="view_upcoming">Upcoming</string>
+    <string name="view_overdue">Overdue</string>
+    <string name="view_completed">Completed</string>
+    <string name="view_archived">Archived</string>
+    <string name="view_all">All</string>
+
+    <string name="sort_prefix">Sorted by %1$s</string>
+    <string name="sort_due_date">Due date</string>
+    <string name="sort_priority">Priority</string>
+    <string name="sort_created">Recently created</string>
+
+    <string name="search_hint">Search tasks</string>
+    <string name="menu_edit">Edit</string>
+    <string name="menu_archive">Archive</string>
+    <string name="menu_unarchive">Unarchive</string>
+    <string name="menu_delete">Delete</string>
+
+    <string name="delete_title">Delete this task?</string>
+    <string name="delete_message">The task will be removed from all views. This cannot be undone yet.</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+    <string name="empty_today">Nothing due today. Enjoy the calm.</string>
+    <string name="empty_upcoming">No upcoming tasks with a due date.</string>
+    <string name="empty_overdue">Nothing overdue. Well done.</string>
+    <string name="empty_completed">No completed tasks yet.</string>
+    <string name="empty_archived">No archived tasks.</string>
+    <string name="empty_all">No tasks yet. Tap + to add your first one.</string>
+    <string name="empty_search_results">No tasks match your search.</string>
+
+    <string name="priority_urgent">Urgent</string>
+    <string name="priority_high">High</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_low">Low</string>
+
+    <string name="due_overdue_suffix">Overdue · %1$s</string>
+
+    <string name="editor_title_create">New task</string>
+    <string name="editor_title_edit">Edit task</string>
+    <string name="editor_title_field">Title</string>
+    <string name="editor_title_error">A title is required</string>
+    <string name="editor_notes">Notes</string>
+    <string name="editor_priority">Priority</string>
+    <string name="editor_due">Due</string>
+    <string name="editor_no_due_date">No due date</string>
+    <string name="editor_pick_date">Pick date</string>
+    <string name="editor_pick_time">Pick time</string>
+    <string name="editor_add_time">Add time</string>
+    <string name="editor_change_time">Change time</string>
+    <string name="editor_clear_date">Clear</string>
+    <string name="editor_project">Project (optional)</string>
+    <string name="editor_tags">Tags</string>
+    <string name="editor_tags_hint">Comma separated, e.g. home, errands</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_save_failed">Couldn&#39;t save your task. Please try again.</string>
+
+    <string name="cd_open_search">Search tasks</string>
+    <string name="cd_close_search">Close search</string>
+    <string name="cd_clear_search">Clear search text</string>
+    <string name="cd_add_task">Add a new task</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_more_options">More options for %1$s</string>
 </resources>
