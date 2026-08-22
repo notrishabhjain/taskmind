@@ -15,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -73,7 +74,7 @@ class TasksViewModelTest {
         zoneId = zone
     )
 
-    private fun collectInBackground(vm: TasksViewModel) {
+    private fun TestScope.collectInBackground(vm: TasksViewModel) {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             vm.uiState.collect {}
         }
