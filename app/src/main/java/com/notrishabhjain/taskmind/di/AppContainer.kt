@@ -34,7 +34,7 @@ class AppContainer(context: Context) {
         RoomActivityLogRepository(database.activityLogDao())
 
     val projectTagRepository: ProjectTagRepository =
-        RoomProjectTagRepository(database.projectTagDao())
+        RoomProjectTagRepository(database.projectTagDao(), timeProvider)
 
     val taskIntakeService: TaskIntakeService = TaskIntakeService(
         taskRepository = taskRepository,

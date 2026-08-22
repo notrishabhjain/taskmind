@@ -101,7 +101,7 @@ class RoomTaskRepository(
 
         sql.append(orderByClause(query))
 
-        return taskDao.observeTasks(SimpleSQLiteQuery(sql.toString(), args))
+        return taskDao.observeTasks(SimpleSQLiteQuery(sql.toString(), args.toTypedArray()))
             .map { entities -> entities.map { entity -> entity.toDomain(tagIdsFor(entity.id)) } }
     }
 

@@ -12,9 +12,9 @@ object EvidenceValidator {
     private val WHITESPACE = Regex("\\s+")
 
     fun validate(evidence: String?, sourceText: String?): EvidenceCheck {
-        val needle = evidence?.let(::canonical)?.orEmpty()
+        val needle = if (evidence.isNullOrBlank()) "" else canonical(evidence)
         if (needle.isEmpty()) return EvidenceCheck.EmptyEvidence
-        val haystack = sourceText?.let(::canonical)?.orEmpty()
+        val haystack = if (sourceText.isNullOrBlank()) "" else canonical(sourceText)
         if (haystack.isEmpty()) return EvidenceCheck.MissingSource
         return if (haystack.contains(needle)) EvidenceCheck.Valid else EvidenceCheck.NotInSource(needle)
     }

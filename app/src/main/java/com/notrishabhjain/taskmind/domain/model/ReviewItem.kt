@@ -1,5 +1,7 @@
 package com.notrishabhjain.taskmind.domain.model
 
+import java.time.Instant
+
 enum class ReviewStatus { PENDING, ACCEPTED, DISMISSED }
 
 data class ReviewItem(

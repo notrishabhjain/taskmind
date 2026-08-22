@@ -98,8 +98,8 @@ class TasksViewModel(
         }
     }
 
-    fun onDeleteRequested(taskId: Long) {
-        pendingDeleteId.value = taskId
+    fun onDeleteRequested(row: TaskRowUi) {
+        pendingDeleteId.value = row.id
     }
 
     fun onDeleteDismissed() {

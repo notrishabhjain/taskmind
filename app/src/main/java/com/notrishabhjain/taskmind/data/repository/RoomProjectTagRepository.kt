@@ -7,9 +7,11 @@ import com.notrishabhjain.taskmind.data.mapper.toDomain
 import com.notrishabhjain.taskmind.domain.intake.TitleNormalizer
 import com.notrishabhjain.taskmind.domain.model.Tag
 import com.notrishabhjain.taskmind.domain.repository.ProjectTagRepository
+import com.notrishabhjain.taskmind.domain.time.TimeProvider
 
 class RoomProjectTagRepository(
-    private val projectTagDao: ProjectTagDao
+    private val projectTagDao: ProjectTagDao,
+    private val timeProvider: TimeProvider
 ) : ProjectTagRepository {
 
     override suspend fun ensureTags(names: List<String>): List<Long> = names
@@ -36,7 +38,13 @@ class RoomProjectTagRepository(
         val nameKey = TitleNormalizer.titleKey(trimmed)
         projectTagDao.findProject(nameKey)?.let { return it.id }
 
-        projectTagDao.insertProject(ProjectEntity(name = trimmed, nameKey = nameKey))
+        projectTagDao.insertProject(
+            ProjectEntity(
+                name = trimmed,
+                nameKey = nameKey,
+                createdAt = timeProvider.now().toEpochMilli()
+            )
+        )
         return requireNotNull(projectTagDao.findProject(nameKey)) {
             "Project row missing after insert: $nameKey"
         }.id

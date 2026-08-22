@@ -6,7 +6,6 @@ import com.notrishabhjain.taskmind.domain.model.InferenceOrigin
 import com.notrishabhjain.taskmind.domain.model.ReviewItem
 import com.notrishabhjain.taskmind.domain.model.ReviewStatus
 import com.notrishabhjain.taskmind.domain.model.Task
-import com.notrishabhjain.taskmind.domain.model.TaskProposal
 import com.notrishabhjain.taskmind.domain.model.TaskStatus
 import com.notrishabhjain.taskmind.domain.model.SyncState
 import com.notrishabhjain.taskmind.domain.repository.ActivityLogRepository

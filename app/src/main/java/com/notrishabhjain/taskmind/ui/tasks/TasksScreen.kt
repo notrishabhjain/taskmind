@@ -307,11 +307,12 @@ private fun PriorityDot(priority: Priority) {
         Priority.MEDIUM -> MaterialTheme.colorScheme.primary
         Priority.LOW -> MaterialTheme.colorScheme.outline
     }
+    val label = priorityLabel(priority)
     Box(
         modifier = Modifier
             .size(10.dp)
             .background(color, CircleShape)
-            .semantics { contentDescription = priorityLabel(priority) }
+            .semantics { contentDescription = label }
     )
 }
 
