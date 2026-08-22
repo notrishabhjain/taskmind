@@ -246,7 +246,8 @@ class EntityMappersTest {
         val projectEntity = com.notrishabhjain.taskmind.data.db.entity.ProjectEntity(
             id = 8L,
             name = "Home",
-            nameKey = "home"
+            nameKey = "home",
+            createdAt = instantA.toEpochMilli()
         )
         val tagEntity = TagEntity(id = 9L, name = "Errands", nameKey = "errands")
 

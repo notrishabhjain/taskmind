@@ -1,6 +1,5 @@
 package com.notrishabhjain.taskmind.domain.intake
 
-import com.notrishabhjain.taskmind.domain.model.ProposalOrigin
 import com.notrishabhjain.taskmind.domain.model.SourceType
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals

@@ -14,12 +14,12 @@ class RawQueryObservationContractTest {
         val rawQuery = method.getAnnotation(RawQuery::class.java)
             ?: throw AssertionError("observeTasks must be annotated with @RawQuery")
 
-        val observed = rawQuery.observedEntities.toSet()
+        val observedNames = rawQuery.observedEntities.map { it.java.name }.toSet()
 
-        assertTrue(TaskEntity::class.java in observed)
+        assertTrue("Task changes must re-emit the observable task list", TaskEntity::class.java.name in observedNames)
         assertTrue(
             "Tag-link changes must re-emit the observable task list",
-            TaskTagCrossRef::class.java in observed
+            TaskTagCrossRef::class.java.name in observedNames
         )
     }
 }
