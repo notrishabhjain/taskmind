@@ -10,6 +10,7 @@ import com.notrishabhjain.taskmind.domain.model.ActivityCategory
 import com.notrishabhjain.taskmind.domain.model.ActivityLogEntry
 import com.notrishabhjain.taskmind.domain.model.CaptureState
 import com.notrishabhjain.taskmind.domain.model.InferenceOrigin
+import com.notrishabhjain.taskmind.domain.model.NotificationCapture
 import com.notrishabhjain.taskmind.domain.model.Priority
 import com.notrishabhjain.taskmind.domain.model.Project
 import com.notrishabhjain.taskmind.domain.model.ReviewItem
