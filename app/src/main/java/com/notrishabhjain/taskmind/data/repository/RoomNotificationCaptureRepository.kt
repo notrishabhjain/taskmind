@@ -52,6 +52,18 @@ class RoomNotificationCaptureRepository(
     ): NotificationCapture? =
         notificationCaptureDao.findLatestByIdentity(sourcePackage, notificationKey)?.toDomain()
 
+    override suspend fun claimForProcessing(id: Long, now: Instant): Boolean =
+        notificationCaptureDao.claimForProcessing(id, now.toEpochMilli()) > 0
+
+    override suspend fun selectDueForProcessing(limit: Int): List<NotificationCapture> =
+        notificationCaptureDao.selectDueForProcessing(limit).map { it.toDomain() }
+
+    override suspend fun promoteCapturedToQueued(now: Instant): Int =
+        notificationCaptureDao.promoteCapturedToQueued(now.toEpochMilli())
+
+    override suspend fun recoverStaleProcessing(staleCutoff: Instant, now: Instant): Int =
+        notificationCaptureDao.recoverStaleProcessing(staleCutoff.toEpochMilli(), now.toEpochMilli())
+
     private suspend fun loadById(id: Long): NotificationCapture? =
         notificationCaptureDao.findById(id)?.toDomain()
 }

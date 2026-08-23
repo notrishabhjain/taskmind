@@ -178,6 +178,62 @@ class FakeNotificationCaptureRepository : com.notrishabhjain.taskmind.domain.rep
             it.sourcePackage == sourcePackage && it.notificationKey == notificationKey
         }
         .maxByOrNull { it.createdAt.toEpochMilli() }
+
+    override suspend fun claimForProcessing(id: Long, now: java.time.Instant): Boolean {
+        val current = capturesById[id] ?: return false
+        val eligible = current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.CAPTURED ||
+            current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.QUEUED ||
+            current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.RETRY_PENDING
+        if (!eligible) return false
+        capturesById[id] = current.copy(
+            state = com.notrishabhjain.taskmind.domain.model.CaptureState.PROCESSING,
+            updatedAt = now
+        )
+        return true
+    }
+
+    override suspend fun selectDueForProcessing(limit: Int): List<com.notrishabhjain.taskmind.domain.model.NotificationCapture> =
+        capturesById.values
+            .filter {
+                it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.CAPTURED ||
+                    it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.QUEUED ||
+                    it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.RETRY_PENDING
+            }
+            .sortedBy { it.createdAt.toEpochMilli() }
+            .take(limit)
+
+    override suspend fun promoteCapturedToQueued(now: java.time.Instant): Int {
+        var count = 0
+        for ((id, capture) in capturesById) {
+            if (capture.state == com.notrishabhjain.taskmind.domain.model.CaptureState.CAPTURED) {
+                capturesById[id] = capture.copy(
+                    state = com.notrishabhjain.taskmind.domain.model.CaptureState.QUEUED,
+                    updatedAt = now
+                )
+                count++
+            }
+        }
+        return count
+    }
+
+    override suspend fun recoverStaleProcessing(
+        staleCutoff: java.time.Instant,
+        now: java.time.Instant
+    ): Int {
+        var count = 0
+        for ((id, capture) in capturesById) {
+            if (capture.state == com.notrishabhjain.taskmind.domain.model.CaptureState.PROCESSING &&
+                capture.updatedAt.isBefore(staleCutoff)
+            ) {
+                capturesById[id] = capture.copy(
+                    state = com.notrishabhjain.taskmind.domain.model.CaptureState.QUEUED,
+                    updatedAt = now
+                )
+                count++
+            }
+        }
+        return count
+    }
 }
 
 class FakeActivityLogRepository : ActivityLogRepository {

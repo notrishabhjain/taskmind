@@ -30,4 +30,5 @@ fun captureStateLabelRes(state: CaptureState): Int = when (state) {
     CaptureState.FAILED -> R.string.capture_state_failed
     CaptureState.RETRY_PENDING -> R.string.capture_state_retry_pending
     CaptureState.IGNORED -> R.string.capture_state_ignored
+    CaptureState.DEFERRED -> R.string.capture_state_deferred
 }

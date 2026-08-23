@@ -29,6 +29,32 @@ interface NotificationCaptureDao {
     fun observeByState(state: String): Flow<List<NotificationCaptureEntity>>
 
     @Query(
+        "SELECT * FROM notification_captures " +
+            "WHERE state IN ('CAPTURED', 'QUEUED', 'RETRY_PENDING') " +
+            "ORDER BY createdAt ASC, id ASC LIMIT :limit"
+    )
+    suspend fun selectDueForProcessing(limit: Int): List<NotificationCaptureEntity>
+
+    @Query(
+        "UPDATE notification_captures " +
+            "SET state = 'PROCESSING', updatedAt = :now " +
+            "WHERE id = :id AND state IN ('CAPTURED', 'QUEUED', 'RETRY_PENDING')"
+    )
+    suspend fun claimForProcessing(id: Long, now: Long): Int
+
+    @Query(
+        "UPDATE notification_captures SET state = 'QUEUED', updatedAt = :now " +
+            "WHERE state = 'CAPTURED'"
+    )
+    suspend fun promoteCapturedToQueued(now: Long): Int
+
+    @Query(
+        "UPDATE notification_captures SET state = 'QUEUED', updatedAt = :now " +
+            "WHERE state = 'PROCESSING' AND updatedAt < :staleCutoff"
+    )
+    suspend fun recoverStaleProcessing(staleCutoff: Long, now: Long): Int
+
+    @Query(
         "SELECT * FROM notification_captures ORDER BY createdAt DESC, id DESC LIMIT :limit"
     )
     fun observeRecentCaptures(limit: Int): Flow<List<NotificationCaptureEntity>>

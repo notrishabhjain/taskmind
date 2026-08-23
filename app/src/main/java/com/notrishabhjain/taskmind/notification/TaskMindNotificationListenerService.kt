@@ -76,6 +76,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
 
         when (val result = container.notificationCaptureRepository.insertIfAbsent(incoming)) {
             is CaptureInsertOutcome.Inserted -> {
+                container.captureWorkScheduler.scheduleDrain()
                 if (relation == CaptureRelation.NEW_VERSION) {
                     appendCaptureEvent(
                         ActivityCategory.CAPTURE_VERSIONED,

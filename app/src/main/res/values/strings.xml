@@ -159,4 +159,9 @@
     <string name="capture_state_failed">FAILED</string>
     <string name="capture_state_retry_pending">RETRY PENDING</string>
     <string name="capture_state_ignored">IGNORED</string>
+    <string name="capture_state_deferred">DEFERRED</string>
+
+    <string name="category_capture_queued">Notification queued</string>
+    <string name="category_capture_deferred">Capture deferred</string>
+    <string name="category_capture_processed">Capture processed</string>
 </resources>

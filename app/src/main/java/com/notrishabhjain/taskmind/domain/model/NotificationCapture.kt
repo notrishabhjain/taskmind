@@ -11,7 +11,8 @@ enum class CaptureState {
     REJECTED,
     FAILED,
     RETRY_PENDING,
-    IGNORED
+    IGNORED,
+    DEFERRED
 }
 
 object NotificationCaptureStateMachine {
@@ -32,9 +33,11 @@ object NotificationCaptureStateMachine {
             CaptureState.REVIEWED,
             CaptureState.REJECTED,
             CaptureState.RETRY_PENDING,
-            CaptureState.FAILED
+            CaptureState.FAILED,
+            CaptureState.DEFERRED
         ),
         CaptureState.RETRY_PENDING to setOf(CaptureState.PROCESSING),
+        CaptureState.DEFERRED to setOf(CaptureState.PROCESSING),
         CaptureState.PROCESSED to emptySet(),
         CaptureState.REVIEWED to emptySet(),
         CaptureState.REJECTED to emptySet(),

@@ -47,6 +47,27 @@ class AppContainer(context: Context) {
     val notificationCaptureRepository: NotificationCaptureRepository =
         RoomNotificationCaptureRepository(database.notificationCaptureDao())
 
+    val notificationCaptureProcessor: com.notrishabhjain.taskmind.domain.service.NotificationCaptureProcessor =
+        com.notrishabhjain.taskmind.data.processor.DeferredNotificationCaptureProcessor()
+
+    val captureProcessingCoordinator: com.notrishabhjain.taskmind.domain.service.CaptureProcessingCoordinator =
+        com.notrishabhjain.taskmind.domain.service.CaptureProcessingCoordinator(
+            captures = notificationCaptureRepository,
+            processor = notificationCaptureProcessor,
+            activityLogRepository = activityLogRepository,
+            timeProvider = timeProvider
+        )
+
+    val captureWorkScheduler: com.notrishabhjain.taskmind.notification.CaptureWorkScheduler =
+        com.notrishabhjain.taskmind.notification.CaptureWorkScheduler(
+            androidx.work.WorkManager.getInstance(context)
+        )
+
+    val captureProcessingWorkerFactory: androidx.work.WorkerFactory =
+        com.notrishabhjain.taskmind.data.worker.CaptureProcessingWorker.factory {
+            captureProcessingCoordinator
+        }
+
     val taskIntakeService: TaskIntakeService = TaskIntakeService(
         taskRepository = taskRepository,
         reviewRepository = reviewRepository,

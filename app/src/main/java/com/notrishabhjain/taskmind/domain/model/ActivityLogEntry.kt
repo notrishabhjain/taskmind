@@ -19,7 +19,10 @@ enum class ActivityCategory {
     RETRY_SCHEDULED,
     CAPTURE_IGNORED,
     CAPTURE_DUPLICATE,
-    CAPTURE_VERSIONED
+    CAPTURE_VERSIONED,
+    CAPTURE_QUEUED,
+    CAPTURE_DEFERRED,
+    CAPTURE_PROCESSED
 }
 
 data class ActivityLogEntry(

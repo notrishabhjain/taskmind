@@ -103,6 +103,7 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
                 Lifecycle.Event.ON_RESUME -> {
                     tasksViewModel.onHostResumed()
                     notificationAccessEnabled = isNotificationAccessGranted(context)
+                    container.captureWorkScheduler.scheduleDrain()
                 }
 
                 Lifecycle.Event.ON_PAUSE -> tasksViewModel.onHostPaused()

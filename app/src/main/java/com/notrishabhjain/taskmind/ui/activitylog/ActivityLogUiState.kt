@@ -42,4 +42,7 @@ fun categoryLabelRes(category: ActivityCategory): Int = when (category) {
     ActivityCategory.CAPTURE_IGNORED -> R.string.category_capture_ignored
     ActivityCategory.CAPTURE_DUPLICATE -> R.string.category_capture_duplicate
     ActivityCategory.CAPTURE_VERSIONED -> R.string.category_capture_versioned
+    ActivityCategory.CAPTURE_QUEUED -> R.string.category_capture_queued
+    ActivityCategory.CAPTURE_DEFERRED -> R.string.category_capture_deferred
+    ActivityCategory.CAPTURE_PROCESSED -> R.string.category_capture_processed
 }
