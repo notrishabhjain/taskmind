@@ -59,7 +59,7 @@ class TasksViewModelTest {
                     title = "Due today",
                     titleKey = "due today",
                     priority = Priority.HIGH,
-                    dueAt = day1Noon.minusSeconds(3_600),
+                    dueAt = day1Noon.plusSeconds(3_600),
                     sourceType = SourceType.MANUAL,
                     createdAt = day1Start,
                     updatedAt = day1Start
