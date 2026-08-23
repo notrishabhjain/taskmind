@@ -48,7 +48,7 @@ object NotificationCaptureStateMachine {
     fun isTerminal(state: CaptureState): Boolean = state in TERMINAL_STATES
 
     fun requireValidTransition(from: CaptureState, to: CaptureState) {
-        require(canTransition(from, to)) {
+        check(canTransition(from, to)) {
             "Illegal capture transition ${from.name} -> ${to.name}"
         }
     }
