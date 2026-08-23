@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -45,6 +46,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.notrishabhjain.taskmind.di.AppContainer
+import com.notrishabhjain.taskmind.notification.TaskMindNotificationListenerService
 import com.notrishabhjain.taskmind.ui.activitylog.ActivityLogScreen
 import com.notrishabhjain.taskmind.ui.activitylog.ActivityLogViewModel
 import com.notrishabhjain.taskmind.ui.editor.EditTaskScreen
