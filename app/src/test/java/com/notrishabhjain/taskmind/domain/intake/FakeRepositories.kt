@@ -89,6 +89,14 @@ class FakeReviewRepository : ReviewRepository {
 
     override suspend fun findById(id: Long): ReviewItem? = itemsById[id]
 
+    override fun observePending(): Flow<List<ReviewItem>> = flow {
+        emit(
+            itemsById.values
+                .filter { it.status == ReviewStatus.PENDING }
+                .sortedByDescending { it.createdAt.toEpochMilli() }
+        )
+    }
+
     override suspend fun markDecided(
         id: Long,
         status: ReviewStatus,
@@ -113,6 +121,10 @@ class FakeActivityLogRepository : ActivityLogRepository {
 
     override suspend fun append(entry: ActivityLogEntry) {
         entries += entry
+    }
+
+    override fun observeRecent(limit: Int): Flow<List<ActivityLogEntry>> = flow {
+        emit(entries.sortedByDescending { it.createdAt.toEpochMilli() }.take(limit))
     }
 }
 

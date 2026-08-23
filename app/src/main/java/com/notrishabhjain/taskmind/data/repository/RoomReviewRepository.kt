@@ -7,6 +7,8 @@ import com.notrishabhjain.taskmind.domain.model.ReviewItem
 import com.notrishabhjain.taskmind.domain.model.ReviewStatus
 import com.notrishabhjain.taskmind.domain.repository.ReviewRepository
 import java.time.Instant
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class RoomReviewRepository(
     private val reviewDao: ReviewDao
@@ -19,6 +21,9 @@ class RoomReviewRepository(
 
     override suspend fun findById(id: Long): ReviewItem? =
         reviewDao.findById(id)?.toDomain()
+
+    override fun observePending(): Flow<List<ReviewItem>> =
+        reviewDao.observePending().map { entities -> entities.map { it.toDomain() } }
 
     override suspend fun markDecided(
         id: Long,

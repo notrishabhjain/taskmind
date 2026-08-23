@@ -66,4 +66,41 @@
     <string name="cd_add_task">Add a new task</string>
     <string name="cd_back">Back</string>
     <string name="cd_more_options">More options for %1$s</string>
+
+    <string name="nav_tasks">Tasks</string>
+    <string name="nav_review">Review</string>
+    <string name="nav_activity">Activity</string>
+
+    <string name="review_title">Review inbox</string>
+    <string name="review_empty">Nothing is waiting for your confirmation.</string>
+    <string name="review_accept">Accept</string>
+    <string name="review_dismiss">Dismiss</string>
+    <string name="review_confidence_label">Confidence %1$d%%</string>
+    <string name="review_confidence_unknown">Confidence unknown</string>
+    <string name="review_evidence_label">Evidence</string>
+    <string name="review_reasoning_label">Reasoning</string>
+    <string name="review_show_original">Show original message</string>
+    <string name="review_source_line">Source · %1$s</string>
+    <string name="review_duplicate_message">This suggestion already exists as a task.</string>
+    <string name="review_unavailable_message">This suggestion is no longer pending.</string>
+    <string name="review_decision_failed">Could not process this suggestion. Please try again.</string>
+
+    <string name="activity_title">Activity</string>
+    <string name="activity_empty">No activity recorded yet.</string>
+    <string name="activity_task_ref">Task #%1$d</string>
+
+    <string name="category_task_created">Task created</string>
+    <string name="category_task_updated">Task updated</string>
+    <string name="category_task_completed">Task completed</string>
+    <string name="category_task_reopened">Task reopened</string>
+    <string name="category_task_archived">Task archived</string>
+    <string name="category_task_unarchived">Task unarchived</string>
+    <string name="category_task_deleted">Task deleted</string>
+    <string name="category_intake_accepted">Suggestion accepted</string>
+    <string name="category_intake_rejected">Suggestion rejected</string>
+    <string name="category_intake_sent_to_review">Sent to review</string>
+    <string name="category_duplicate_detected">Duplicate ignored</string>
+    <string name="category_evidence_failed">Evidence not verified</string>
+    <string name="category_processing_failed">Processing failed</string>
+    <string name="category_retry_scheduled">Retry scheduled</string>
 </resources>

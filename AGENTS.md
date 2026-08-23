@@ -10,9 +10,11 @@ one auditable intake funnel into a local-first task store. The repository
 currently contains the data/domain layer plus the core task manager UI
 (Milestones 1–2): domain models, the Room database, repositories, title
 normalisation, evidence validation, confidence gating, the Task Intake service,
-state transitions, and the Today/Upcoming/Overdue/Completed/Archived/All task
-list with create/edit flows. Review Inbox and Activity Log screens are not built
-yet; their data layer exists. CI builds and verifies every change.
+state transitions, and the task manager UI (Today/Upcoming/Overdue/Completed/
+Archived/All with create/edit flows) plus the Review Inbox (accept routes through
+the intake funnel via `ReviewService`; dismissals are logged) and a bounded
+Activity Log screen fed by `ActivityLogRepository.observeRecent`. Bottom-tab
+navigation lives in `MainActivity` (manual state, no nav library). CI builds and verifies every change.
 
 ## Core principles (non-negotiable)
 

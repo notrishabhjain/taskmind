@@ -6,12 +6,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.notrishabhjain.taskmind.data.db.entity.ActivityLogEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ActivityLogDao {
 
     @Insert
     suspend fun insert(entity: ActivityLogEntity): Long
+
+    @Query("SELECT * FROM activity_log ORDER BY createdAt DESC, id DESC LIMIT :limit")
+    fun observeRecent(limit: Int): Flow<List<ActivityLogEntity>>
 
     @Query(
         "DELETE FROM activity_log WHERE id NOT IN (" +

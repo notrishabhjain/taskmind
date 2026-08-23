@@ -12,6 +12,7 @@ import com.notrishabhjain.taskmind.domain.repository.ActivityLogRepository
 import com.notrishabhjain.taskmind.domain.repository.ProjectTagRepository
 import com.notrishabhjain.taskmind.domain.repository.ReviewRepository
 import com.notrishabhjain.taskmind.domain.repository.TaskRepository
+import com.notrishabhjain.taskmind.domain.service.ReviewService
 import com.notrishabhjain.taskmind.domain.service.TaskService
 import com.notrishabhjain.taskmind.domain.time.SystemTimeProvider
 import com.notrishabhjain.taskmind.domain.time.TimeProvider
@@ -49,5 +50,12 @@ class AppContainer(context: Context) {
         projectTagRepository = projectTagRepository,
         activityLogRepository = activityLogRepository,
         timeProvider = timeProvider
+    )
+
+    val reviewService: ReviewService = ReviewService(
+        reviewRepository = reviewRepository,
+        activityLogRepository = activityLogRepository,
+        timeProvider = timeProvider,
+        taskIntakeService = taskIntakeService
     )
 }
