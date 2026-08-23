@@ -98,7 +98,7 @@ class TasksViewModelTest {
 
         time.advanceBy(24 * 60 * 60 * 1_000L)
         vm.onHostResumed()
-        scheduler.runCurrent()
+        runCurrent()
 
         assertEquals(day2Start.toEpochMilli(), tasks.observations.last().dayStartMillis)
 
@@ -114,9 +114,9 @@ class TasksViewModelTest {
         val observationsBefore = tasks.observations.size
 
         vm.onHostResumed()
-        scheduler.runCurrent()
+        runCurrent()
         advanceTimeBy(TEST_TICK_INTERVAL_MS)
-        scheduler.runCurrent()
+        runCurrent()
 
         assertTrue(tasks.observations.size > observationsBefore)
         assertEquals(day1Start.toEpochMilli(), tasks.observations.last().dayStartMillis)
