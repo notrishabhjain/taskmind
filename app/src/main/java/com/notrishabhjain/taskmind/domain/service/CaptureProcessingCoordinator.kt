@@ -1,9 +1,10 @@
 package com.notrishabhjain.taskmind.domain.service
 
 import com.notrishabhjain.taskmind.domain.model.ActivityCategory
-import com.notrishabhjain.taskmind.domain.model.CaptureProcessingResult
+import com.notrishabhjain.taskmind.domain.model.ActivityLogEntry
 import com.notrishabhjain.taskmind.domain.model.CaptureState
 import com.notrishabhjain.taskmind.domain.model.NotificationCapture
+import com.notrishabhjain.taskmind.domain.model.NotificationCaptureStateMachine
 import com.notrishabhjain.taskmind.notification.CaptureRetryPolicy
 import com.notrishabhjain.taskmind.domain.repository.ActivityLogRepository
 import com.notrishabhjain.taskmind.domain.repository.NotificationCaptureRepository

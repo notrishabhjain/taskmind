@@ -4,7 +4,6 @@ import com.notrishabhjain.taskmind.domain.intake.FakeActivityLogRepository
 import com.notrishabhjain.taskmind.domain.intake.FakeNotificationCaptureRepository
 import com.notrishabhjain.taskmind.domain.intake.FixedTimeProvider
 import com.notrishabhjain.taskmind.domain.model.ActivityCategory
-import com.notrishabhjain.taskmind.domain.model.CaptureProcessingResult
 import com.notrishabhjain.taskmind.domain.model.CaptureState
 import com.notrishabhjain.taskmind.domain.model.NotificationCapture
 import java.time.Instant

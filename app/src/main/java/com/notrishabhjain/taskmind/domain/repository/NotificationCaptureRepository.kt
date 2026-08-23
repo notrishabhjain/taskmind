@@ -3,6 +3,7 @@ package com.notrishabhjain.taskmind.domain.repository
 import com.notrishabhjain.taskmind.domain.model.CaptureState
 import com.notrishabhjain.taskmind.domain.model.NotificationCapture
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 sealed interface CaptureInsertOutcome {
     data class Inserted(val capture: NotificationCapture) : CaptureInsertOutcome
