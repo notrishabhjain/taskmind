@@ -33,7 +33,24 @@ class TaskIntakeService(
     private val confidenceGate: ConfidenceGate = ConfidenceGate()
 ) {
 
-    suspend fun submit(proposal: TaskProposal): IntakeOutcome {
+    suspend fun submit(proposal: TaskProposal): IntakeOutcome = try {
+        submitInternal(proposal)
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        throw cancelled
+    } catch (unexpected: Exception) {
+        activityLogRepository.append(
+            entry(
+                category = ActivityCategory.PROCESSING_FAILED,
+                message = "Proposed task \"${TitleNormalizer.normalize(proposal.title)}\" could not be processed",
+                detail = "${unexpected::class.simpleName}: ${unexpected.message}",
+                taskId = null,
+                at = timeProvider.now()
+            )
+        )
+        throw unexpected
+    }
+
+    private suspend fun submitInternal(proposal: TaskProposal): IntakeOutcome {
         val now = timeProvider.now()
 
         val displayTitle = TitleNormalizer.normalize(proposal.title)

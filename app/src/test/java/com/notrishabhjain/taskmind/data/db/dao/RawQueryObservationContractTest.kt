@@ -1,8 +1,6 @@
 package com.notrishabhjain.taskmind.data.db.dao
 
-import androidx.room.RawQuery
-import com.notrishabhjain.taskmind.data.db.entity.TaskEntity
-import com.notrishabhjain.taskmind.data.db.entity.TaskTagCrossRef
+import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -10,16 +8,30 @@ class RawQueryObservationContractTest {
 
     @Test
     fun `task list observation reacts to task and tag-link changes`() {
-        val method = TaskDao::class.java.methods.first { it.name == "observeTasks" }
-        val rawQuery = method.getAnnotation(RawQuery::class.java)
-            ?: throw AssertionError("observeTasks must be annotated with @RawQuery")
+        val source = readDaoSource()
+        val annotationStart = source.indexOf("@RawQuery")
+        assertTrue("observeTasks must declare @RawQuery", annotationStart >= 0)
 
-        val observedNames = rawQuery.observedEntities.map { it.java.name }.toSet()
+        val segment = source.substring(annotationStart, source.indexOf("observeTasks", annotationStart))
 
-        assertTrue("Task changes must re-emit the observable task list", TaskEntity::class.java.name in observedNames)
+        assertTrue(
+            "Task changes must re-emit the observable task list",
+            "TaskEntity::class" in segment
+        )
         assertTrue(
             "Tag-link changes must re-emit the observable task list",
-            TaskTagCrossRef::class.java.name in observedNames
+            "TaskTagCrossRef::class" in segment
         )
+    }
+
+    private fun readDaoSource(): String {
+        val relative = "src/main/java/com/notrishabhjain/taskmind/data/db/dao/TaskDao.kt"
+        val file = sequenceOf(File(relative), File("app").resolve(relative))
+            .firstOrNull { it.exists() }
+            ?: throw AssertionError(
+                "TaskDao.kt is not reachable from the working directory; the RawQuery " +
+                    "observation contract is verified statically because @RawQuery uses class retention"
+            )
+        return file.readText()
     }
 }

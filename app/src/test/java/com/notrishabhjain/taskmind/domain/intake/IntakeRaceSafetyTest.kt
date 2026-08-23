@@ -48,7 +48,10 @@ class IntakeRaceSafetyTest {
             sourceType: SourceType,
             sourceRef: String,
             titleKey: String
-        ): Task? = backing.findByLogicalKey(sourceType, sourceRef, titleKey)
+        ): Task? {
+            if (failuresLeft > 0) return null
+            return backing.findByLogicalKey(sourceType, sourceRef, titleKey)
+        }
 
         override fun observeTasks(
             query: TaskQuery,
@@ -93,17 +96,23 @@ class IntakeRaceSafetyTest {
     @Test
     fun `constraint collision after pre-check resolves to DuplicateDetected`() = runBlocking {
         val existingId = seedViaFunnel("wa:1")
-        val service = serviceWith(CollisionInjectingRepository(tasks, failuresRemaining = 1))
+        val racing = CollisionInjectingRepository(tasks, failuresRemaining = 1)
+        val service = serviceWith(racing)
+
+        val duplicatesBefore = activityLog.countOf(ActivityCategory.DUPLICATE_DETECTED)
+        val createdBefore = activityLog.countOf(ActivityCategory.TASK_CREATED)
+        val failedBefore = activityLog.countOf(ActivityCategory.PROCESSING_FAILED)
 
         val outcome = service.submit(collisionProposal("wa:1"))
 
+        assertEquals(0, racing.failuresLeft)
         assertTrue(outcome is IntakeOutcome.DuplicateDetected)
         assertEquals(existingId, (outcome as IntakeOutcome.DuplicateDetected).existingTaskId)
         assertEquals(1, tasks.size)
         assertEquals(0, reviews.all.size)
-        assertEquals(1, activityLog.countOf(ActivityCategory.DUPLICATE_DETECTED))
-        assertEquals(0, activityLog.countOf(ActivityCategory.TASK_CREATED))
-        assertEquals(0, activityLog.countOf(ActivityCategory.PROCESSING_FAILED))
+        assertEquals(duplicatesBefore + 1, activityLog.countOf(ActivityCategory.DUPLICATE_DETECTED))
+        assertEquals(createdBefore, activityLog.countOf(ActivityCategory.TASK_CREATED))
+        assertEquals(failedBefore, activityLog.countOf(ActivityCategory.PROCESSING_FAILED))
     }
 
     @Test
