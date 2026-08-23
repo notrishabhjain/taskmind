@@ -20,6 +20,8 @@ import com.notrishabhjain.taskmind.domain.service.TaskService
 import com.notrishabhjain.taskmind.domain.time.SystemTimeProvider
 import com.notrishabhjain.taskmind.domain.time.TimeProvider
 
+import kotlinx.coroutines.flow.MutableStateFlow
+
 class AppContainer(context: Context) {
 
     private val database: TaskMindDatabase = Room.databaseBuilder(
@@ -66,4 +68,6 @@ class AppContainer(context: Context) {
         timeProvider = timeProvider,
         taskIntakeService = taskIntakeService
     )
+
+    val notificationListenerConnected = MutableStateFlow(false)
 }

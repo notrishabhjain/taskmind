@@ -103,4 +103,11 @@
     <string name="category_evidence_failed">Evidence not verified</string>
     <string name="category_processing_failed">Processing failed</string>
     <string name="category_retry_scheduled">Retry scheduled</string>
+
+    <string name="notification_access_label">Notification access</string>
+    <string name="notification_access_enabled">Enabled</string>
+    <string name="notification_access_disabled">Not enabled</string>
+    <string name="notification_access_enable_action">Enable notification access</string>
+    <string name="notification_listener_connected">Connected</string>
+    <string name="notification_listener_disconnected">Disconnected</string>
 </resources>
