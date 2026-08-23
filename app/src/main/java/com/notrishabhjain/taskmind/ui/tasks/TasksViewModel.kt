@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -36,24 +37,32 @@ class TasksViewModel(
     private val taskRepository: TaskRepository,
     private val taskService: TaskService,
     private val timeProvider: TimeProvider,
-    private val zoneId: ZoneId = ZoneId.systemDefault()
+    private val zoneId: ZoneId = ZoneId.systemDefault(),
+    private val resyncIntervalMs: Long = RESYNC_INTERVAL_MS
 ) : ViewModel() {
 
     private val query = MutableStateFlow(TaskQuery())
     private val pendingDeleteId = MutableStateFlow<Long?>(null)
     private val refreshTick = MutableStateFlow(0)
+    private val resyncEnabled = MutableStateFlow(false)
 
     init {
         viewModelScope.launch {
             while (true) {
-                delay(RESYNC_INTERVAL_MS)
+                resyncEnabled.first { it }
+                delay(resyncIntervalMs)
                 refreshTick.update { it + 1 }
             }
         }
     }
 
     fun onHostResumed() {
+        resyncEnabled.value = true
         refreshTick.update { it + 1 }
+    }
+
+    fun onHostPaused() {
+        resyncEnabled.value = false
     }
 
     private val rowsState: StateFlow<TasksUiState> =

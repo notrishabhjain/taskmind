@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -42,6 +43,11 @@ class TasksViewModelTest {
     private val tasks = FakeTaskRepository()
     private val activityLog = FakeActivityLogRepository()
     private val tags = FakeProjectTagRepository()
+
+    private companion object {
+        const val TEST_NEVER_INTERVAL_MS = 1_000_000_000_000L
+        const val TEST_TICK_INTERVAL_MS = 60_000L
+    }
 
     @Before
     fun setUp() {
@@ -67,12 +73,14 @@ class TasksViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(): TasksViewModel = TasksViewModel(
-        taskRepository = tasks,
-        taskService = TaskService(tasks, tags, activityLog, time),
-        timeProvider = time,
-        zoneId = zone
-    )
+    private fun viewModel(resyncIntervalMs: Long = TEST_NEVER_INTERVAL_MS): TasksViewModel =
+        TasksViewModel(
+            taskRepository = tasks,
+            taskService = TaskService(tasks, tags, activityLog, time),
+            timeProvider = time,
+            zoneId = zone,
+            resyncIntervalMs = resyncIntervalMs
+        )
 
     private fun TestScope.collectInBackground(vm: TasksViewModel) {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -90,24 +98,31 @@ class TasksViewModelTest {
 
         time.advanceBy(24 * 60 * 60 * 1_000L)
         vm.onHostResumed()
-        advanceUntilIdle()
+        scheduler.runCurrent()
 
         assertEquals(day2Start.toEpochMilli(), tasks.observations.last().dayStartMillis)
+
+        vm.onHostPaused()
     }
 
     @Test
-    fun `periodic refresh keeps flowing without user interaction`() = runTest(scheduler) {
-        val vm = viewModel()
+    fun `periodic refresh keeps flowing while host is active`() = runTest(scheduler) {
+        val vm = viewModel(resyncIntervalMs = TEST_TICK_INTERVAL_MS)
         collectInBackground(vm)
         advanceUntilIdle()
 
         val observationsBefore = tasks.observations.size
 
-        advanceTimeBy(TasksViewModel.RESYNC_INTERVAL_MS + 1)
-        advanceUntilIdle()
+        vm.onHostResumed()
+        scheduler.runCurrent()
+        advanceTimeBy(TEST_TICK_INTERVAL_MS)
+        scheduler.runCurrent()
 
         assertTrue(tasks.observations.size > observationsBefore)
         assertEquals(day1Start.toEpochMilli(), tasks.observations.last().dayStartMillis)
+
+        vm.onHostPaused()
+        advanceUntilIdle()
     }
 
     @Test
