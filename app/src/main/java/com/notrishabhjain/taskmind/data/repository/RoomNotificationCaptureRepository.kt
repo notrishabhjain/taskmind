@@ -39,6 +39,19 @@ class RoomNotificationCaptureRepository(
         notificationCaptureDao.observeByState(state.name)
             .map { entities -> entities.map { it.toDomain() } }
 
+    override fun observeRecentCaptures(limit: Int): Flow<List<NotificationCapture>> =
+        notificationCaptureDao.observeRecentCaptures(limit)
+            .map { entities -> entities.map { it.toDomain() } }
+
+    override fun observeCapture(id: Long): Flow<NotificationCapture?> =
+        notificationCaptureDao.observeById(id).map { it?.toDomain() }
+
+    override suspend fun findLatestByIdentity(
+        sourcePackage: String,
+        notificationKey: String
+    ): NotificationCapture? =
+        notificationCaptureDao.findLatestByIdentity(sourcePackage, notificationKey)?.toDomain()
+
     private suspend fun loadById(id: Long): NotificationCapture? =
         notificationCaptureDao.findById(id)?.toDomain()
 }

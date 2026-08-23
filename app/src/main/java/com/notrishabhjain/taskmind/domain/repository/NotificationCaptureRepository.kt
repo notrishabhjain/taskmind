@@ -21,4 +21,13 @@ interface NotificationCaptureRepository {
     suspend fun update(capture: NotificationCapture)
 
     fun observeByState(state: CaptureState): Flow<List<NotificationCapture>>
+
+    fun observeRecentCaptures(limit: Int): Flow<List<NotificationCapture>>
+
+    fun observeCapture(id: Long): Flow<NotificationCapture?>
+
+    suspend fun findLatestByIdentity(
+        sourcePackage: String,
+        notificationKey: String
+    ): NotificationCapture?
 }

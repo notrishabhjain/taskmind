@@ -110,4 +110,50 @@
     <string name="notification_access_enable_action">Enable notification access</string>
     <string name="notification_listener_connected">Connected</string>
     <string name="notification_listener_disconnected">Disconnected</string>
+
+    <string name="captures_title">Captured notifications</string>
+    <string name="captures_empty">No notifications captured yet.</string>
+    <string name="captures_open_cd">Open captured notifications</string>
+    <string name="captures_detail_title">Capture detail</string>
+    <string name="captures_value_none">—</string>
+
+    <string name="captures_section_identity">Identity</string>
+    <string name="captures_section_content">Content</string>
+    <string name="captures_section_processing">Processing</string>
+    <string name="captures_section_integrity">Integrity</string>
+
+    <string name="captures_field_id">ID</string>
+    <string name="captures_field_package">Source package</string>
+    <string name="captures_field_app_label">App label</string>
+    <string name="captures_field_notification_key">Notification key</string>
+    <string name="captures_field_notification_id">Notification ID</string>
+    <string name="captures_field_tag">Tag</string>
+    <string name="captures_field_post_time">Post time</string>
+    <string name="captures_field_created">Created</string>
+    <string name="captures_field_updated">Updated</string>
+    <string name="captures_field_title">Title</string>
+    <string name="captures_field_text">Text</string>
+    <string name="captures_field_big_text">Big text</string>
+    <string name="captures_field_sub_text">Sub text</string>
+    <string name="captures_field_info_text">Info text</string>
+    <string name="captures_field_conversation_title">Conversation title</string>
+    <string name="captures_field_canonical_source_text">Canonical source text</string>
+    <string name="captures_field_state">State</string>
+    <string name="captures_field_retry_count">Retry count</string>
+    <string name="captures_field_last_error">Last error</string>
+    <string name="captures_field_resulting_task_id">Resulting task ID</string>
+    <string name="captures_field_processed_at">Processed at</string>
+    <string name="captures_field_content_hash">Content hash</string>
+    <string name="captures_field_idempotency_key">Idempotency key</string>
+    <string name="captures_field_source_ref">Source reference</string>
+
+    <string name="capture_state_captured">CAPTURED</string>
+    <string name="capture_state_queued">QUEUED</string>
+    <string name="capture_state_processing">PROCESSING</string>
+    <string name="capture_state_processed">PROCESSED</string>
+    <string name="capture_state_reviewed">REVIEWED</string>
+    <string name="capture_state_rejected">REJECTED</string>
+    <string name="capture_state_failed">FAILED</string>
+    <string name="capture_state_retry_pending">RETRY PENDING</string>
+    <string name="capture_state_ignored">IGNORED</string>
 </resources>

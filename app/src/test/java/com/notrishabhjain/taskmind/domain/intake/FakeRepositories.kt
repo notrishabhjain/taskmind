@@ -155,6 +155,29 @@ class FakeNotificationCaptureRepository : com.notrishabhjain.taskmind.domain.rep
                 .sortedBy { it.createdAt.toEpochMilli() }
         )
     }
+
+    override fun observeRecentCaptures(limit: Int): Flow<List<com.notrishabhjain.taskmind.domain.model.NotificationCapture>> = flow {
+        stateVersion.value
+        emit(
+            capturesById.values
+                .sortedByDescending { it.createdAt.toEpochMilli() }
+                .take(limit)
+        )
+    }
+
+    override fun observeCapture(id: Long): Flow<com.notrishabhjain.taskmind.domain.model.NotificationCapture?> = flow {
+        stateVersion.value
+        emit(capturesById[id])
+    }
+
+    override suspend fun findLatestByIdentity(
+        sourcePackage: String,
+        notificationKey: String
+    ): com.notrishabhjain.taskmind.domain.model.NotificationCapture? = capturesById.values
+        .filter {
+            it.sourcePackage == sourcePackage && it.notificationKey == notificationKey
+        }
+        .maxByOrNull { it.createdAt.toEpochMilli() }
 }
 
 class FakeActivityLogRepository : ActivityLogRepository {

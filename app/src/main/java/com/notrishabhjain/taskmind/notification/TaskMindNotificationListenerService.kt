@@ -5,6 +5,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.notrishabhjain.taskmind.di.AppContainer
 import com.notrishabhjain.taskmind.domain.model.ActivityCategory
+import com.notrishabhjain.taskmind.domain.repository.CaptureInsertOutcome
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,9 +18,14 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
 
     private lateinit var container: AppContainer
 
+    private lateinit var captureFilter: CaptureFilter
+
     override fun onCreate() {
         super.onCreate()
         container = (applicationContext as com.notrishabhjain.taskmind.TaskMindApplication).container
+        captureFilter = CaptureFilter(
+            NotificationCapturePolicy(selfPackage = packageName)
+        )
     }
 
     override fun onDestroy() {
@@ -37,14 +43,76 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        val capture = captureOrNull(sbn) ?: return
         scope.launch {
             try {
-                container.notificationCaptureRepository.insertIfAbsent(capture)
+                handlePosted(sbn)
             } catch (e: Exception) {
                 logGenericFailure(e)
             }
         }
+    }
+
+    private suspend fun handlePosted(sbn: StatusBarNotification) {
+        val input = inputOrNull(sbn) ?: return
+
+        val decision = captureFilter.decide(input)
+        if (decision == CaptureDecision.IGNORE) {
+            appendCaptureEvent(
+                ActivityCategory.CAPTURE_IGNORED,
+                "Notification from ${input.sourcePackage} ignored by filter",
+                detail = null
+            )
+            return
+        }
+
+        val incoming = NotificationCanonicalizer.toCapture(
+            input,
+            capturedAt = container.timeProvider.now()
+        )
+        val existingLatest = container.notificationCaptureRepository.findLatestByIdentity(
+            sourcePackage = incoming.sourcePackage,
+            notificationKey = incoming.notificationKey
+        )
+        val relation = CaptureDeduplication.classify(existingLatest, incoming)
+
+        when (val result = container.notificationCaptureRepository.insertIfAbsent(incoming)) {
+            is CaptureInsertOutcome.Inserted -> {
+                if (relation == CaptureRelation.NEW_VERSION) {
+                    appendCaptureEvent(
+                        ActivityCategory.CAPTURE_VERSIONED,
+                        "Updated notification captured as a new version",
+                        detail = "previous capture #${existingLatest!!.id}",
+                        taskId = null
+                    )
+                }
+            }
+
+            is CaptureInsertOutcome.AlreadyCaptured ->
+                if (relation == CaptureRelation.NEW_VERSION || relation == CaptureRelation.EXACT_DUPLICATE) {
+                    appendCaptureEvent(
+                        ActivityCategory.CAPTURE_DUPLICATE,
+                        "Duplicate delivery of an already captured notification ignored",
+                        detail = "existing capture #${result.existing.id}",
+                        taskId = null
+                    )
+                }
+        }
+    }
+
+    private suspend fun appendCaptureEvent(
+        category: ActivityCategory,
+        message: String,
+        detail: String?
+    ) {
+        container.activityLogRepository.append(
+            com.notrishabhjain.taskmind.domain.model.ActivityLogEntry(
+                category = category,
+                message = message,
+                detail = detail,
+                taskId = null,
+                createdAt = container.timeProvider.now()
+            )
+        )
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
@@ -52,6 +120,14 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
     }
 
     private fun captureOrNull(sbn: StatusBarNotification): com.notrishabhjain.taskmind.domain.model.NotificationCapture? {
+        val input = inputOrNull(sbn) ?: return null
+        return NotificationCanonicalizer.toCapture(
+            input,
+            capturedAt = container.timeProvider.now()
+        )
+    }
+
+    private fun inputOrNull(sbn: StatusBarNotification): RawNotificationInput? {
         val ownPackage = applicationContext.packageName
         val sourcePackage = sbn.packageName ?: return null
         if (NotificationCanonicalizer.isSelfNotification(sourcePackage, ownPackage)) return null
@@ -60,7 +136,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
         val extras = notification.extras
         fun extra(key: String): String? = extras?.getCharSequence(key)?.toString()
 
-        val input = RawNotificationInput(
+        return RawNotificationInput(
             sourcePackage = sourcePackage,
             notificationKey = sbn.key ?: buildString {
                 append(sourcePackage); append('|'); append(sbn.id); append('|'); append(sbn.tag)
@@ -74,11 +150,6 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
             conversationTitle = extra(Notification.EXTRA_CONVERSATION_TITLE),
             category = notification.category,
             appLabel = resolveAppLabel(sourcePackage)
-        )
-
-        return NotificationCanonicalizer.toCapture(
-            input,
-            capturedAt = container.timeProvider.now()
         )
     }
 

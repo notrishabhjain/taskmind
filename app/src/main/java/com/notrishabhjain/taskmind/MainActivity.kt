@@ -50,6 +50,8 @@ import com.notrishabhjain.taskmind.di.AppContainer
 import com.notrishabhjain.taskmind.notification.TaskMindNotificationListenerService
 import com.notrishabhjain.taskmind.ui.activitylog.ActivityLogScreen
 import com.notrishabhjain.taskmind.ui.activitylog.ActivityLogViewModel
+import com.notrishabhjain.taskmind.ui.captures.CapturedNotificationsScreen
+import com.notrishabhjain.taskmind.ui.captures.CapturedNotificationsViewModel
 import com.notrishabhjain.taskmind.ui.editor.EditTaskScreen
 import com.notrishabhjain.taskmind.ui.editor.EditTaskViewModel
 import com.notrishabhjain.taskmind.ui.review.ReviewInboxScreen
@@ -80,11 +82,16 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
     var destination by rememberSaveable { mutableStateOf(Destination.TASKS) }
     var editorOpen by rememberSaveable { mutableStateOf(false) }
     var editorTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var capturesOpen by rememberSaveable { mutableStateOf(false) }
     var notificationAccessEnabled by rememberSaveable { mutableStateOf(false) }
 
     BackHandler(enabled = editorOpen) {
         editorOpen = false
         editorTaskId = null
+    }
+
+    BackHandler(enabled = capturesOpen) {
+        capturesOpen = false
     }
 
     val tasksViewModel: TasksViewModel = viewModel(factory = TasksViewModel.Factory)
@@ -108,6 +115,16 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
 
     LaunchedEffect(Unit) {
         notificationAccessEnabled = isNotificationAccessGranted(context)
+    }
+
+    if (capturesOpen) {
+        val capturesViewModel: CapturedNotificationsViewModel =
+            viewModel(factory = CapturedNotificationsViewModel.Factory)
+        CapturedNotificationsScreen(
+            viewModel = capturesViewModel,
+            onBack = { capturesOpen = false }
+        )
+        return
     }
 
     if (editorOpen) {
@@ -199,7 +216,10 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
                 Destination.ACTIVITY -> {
                     val activityViewModel: ActivityLogViewModel =
                         viewModel(factory = ActivityLogViewModel.Factory)
-                    ActivityLogScreen(viewModel = activityViewModel)
+                    ActivityLogScreen(
+                        viewModel = activityViewModel,
+                        onOpenCapturedNotifications = { capturesOpen = true }
+                    )
                 }
             }
         }

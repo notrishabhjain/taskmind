@@ -27,4 +27,19 @@ interface NotificationCaptureDao {
         "SELECT * FROM notification_captures WHERE state = :state ORDER BY createdAt ASC, id ASC"
     )
     fun observeByState(state: String): Flow<List<NotificationCaptureEntity>>
+
+    @Query(
+        "SELECT * FROM notification_captures ORDER BY createdAt DESC, id DESC LIMIT :limit"
+    )
+    fun observeRecentCaptures(limit: Int): Flow<List<NotificationCaptureEntity>>
+
+    @Query("SELECT * FROM notification_captures WHERE id = :id LIMIT 1")
+    fun observeById(id: Long): Flow<NotificationCaptureEntity?>
+
+    @Query(
+        "SELECT * FROM notification_captures " +
+            "WHERE sourcePackage = :sourcePackage AND notificationKey = :notificationKey " +
+            "ORDER BY createdAt DESC, id DESC LIMIT 1"
+    )
+    suspend fun findLatestByIdentity(sourcePackage: String, notificationKey: String): NotificationCaptureEntity?
 }
