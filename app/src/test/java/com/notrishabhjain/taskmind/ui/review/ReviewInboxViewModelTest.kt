@@ -70,7 +70,11 @@ class ReviewInboxViewModelTest {
         }
     }
 
-    private fun pendingReview(sourceRef: String, title: String): ReviewItem = ReviewItem(
+    private fun pendingReview(
+        sourceRef: String,
+        title: String,
+        createdAtMillis: Long = 500L
+    ): ReviewItem = ReviewItem(
         displayTitle = title,
         titleKey = title.lowercase(),
         priority = Priority.HIGH,
@@ -79,15 +83,17 @@ class ReviewInboxViewModelTest {
         sourceRef = sourceRef,
         sourceText = "please $title today",
         evidence = title.lowercase(),
-        createdAt = Instant.ofEpochMilli(500L)
+        createdAt = Instant.ofEpochMilli(createdAtMillis)
     )
 
     @Test
     fun `only pending items are exposed newest first`() = runTest(scheduler) {
-        reviews.insert(pendingReview("wa:1", "First suggestion"))
-        val accepted = reviews.insert(pendingReview("wa:2", "Second suggestion"))
+        reviews.insert(pendingReview("wa:1", "First suggestion", createdAtMillis = 100L))
+        val accepted = reviews.insert(
+            pendingReview("wa:2", "Second suggestion", createdAtMillis = 200L)
+        )
         reviews.markDecided(accepted.id, ReviewStatus.ACCEPTED, 42L, Instant.ofEpochMilli(600L))
-        reviews.insert(pendingReview("wa:3", "Third suggestion"))
+        reviews.insert(pendingReview("wa:3", "Third suggestion", createdAtMillis = 300L))
 
         val vm = viewModel()
         collectInBackground(vm)

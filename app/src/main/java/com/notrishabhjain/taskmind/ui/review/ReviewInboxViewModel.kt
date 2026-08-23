@@ -58,8 +58,10 @@ class ReviewInboxViewModel(
             busyItemId.value = row.id
             when (decision(row.id)) {
                 is ReviewDecisionResult.Accepted,
-                ReviewDecisionResult.Dismissed,
-                ReviewDecisionResult.DuplicateOfExistingTask -> Unit
+                ReviewDecisionResult.Dismissed -> Unit
+
+                ReviewDecisionResult.DuplicateOfExistingTask ->
+                    messageRes.value = R.string.review_duplicate_message
 
                 ReviewDecisionResult.AlreadyDecided ->
                     messageRes.value = R.string.review_unavailable_message

@@ -15,7 +15,9 @@ import com.notrishabhjain.taskmind.domain.repository.TaskRepository
 import com.notrishabhjain.taskmind.domain.time.TimeProvider
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 class FixedTimeProvider(start: Long = 0L) : TimeProvider {
 
@@ -77,6 +79,7 @@ class FakeTaskRepository : TaskRepository {
 class FakeReviewRepository : ReviewRepository {
 
     private val itemsById = LinkedHashMap<Long, ReviewItem>()
+    private val pendingVersion = MutableStateFlow(0)
     private var nextId = 1L
 
     val all: List<ReviewItem> get() = itemsById.values.toList()
@@ -84,18 +87,18 @@ class FakeReviewRepository : ReviewRepository {
     override suspend fun insert(item: ReviewItem): ReviewItem {
         val stored = item.copy(id = nextId++)
         itemsById[stored.id] = stored
+        pendingVersion.value++
         return stored
     }
 
     override suspend fun findById(id: Long): ReviewItem? = itemsById[id]
 
-    override fun observePending(): Flow<List<ReviewItem>> = flow {
-        emit(
-            itemsById.values
-                .filter { it.status == ReviewStatus.PENDING }
-                .sortedByDescending { it.createdAt.toEpochMilli() }
-        )
-    }
+    override fun observePending(): Flow<List<ReviewItem>> =
+        pendingVersion.map { snapshotPending() }
+
+    private fun snapshotPending(): List<ReviewItem> = itemsById.values
+        .filter { it.status == ReviewStatus.PENDING }
+        .sortedByDescending { it.createdAt.toEpochMilli() }
 
     override suspend fun markDecided(
         id: Long,
@@ -109,6 +112,7 @@ class FakeReviewRepository : ReviewRepository {
             resultingTaskId = resultingTaskId,
             decidedAt = decidedAt
         )
+        pendingVersion.value++
     }
 }
 
