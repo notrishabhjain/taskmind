@@ -64,11 +64,11 @@ fun EditTaskScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val saveErrorMessage = state.saveErrorRes?.let { stringResource(it) }
 
-    LaunchedEffect(state.saveErrorRes) {
-        state.saveErrorRes?.let { res ->
-            snackbarHostState.showSnackbar(context.getString(res))
+    LaunchedEffect(saveErrorMessage) {
+        if (saveErrorMessage != null) {
+            snackbarHostState.showSnackbar(saveErrorMessage)
             viewModel.onErrorMessageShown()
         }
     }
