@@ -116,6 +116,47 @@ class FakeReviewRepository : ReviewRepository {
     }
 }
 
+class FakeNotificationCaptureRepository : com.notrishabhjain.taskmind.domain.repository.NotificationCaptureRepository {
+
+    private val capturesById = LinkedHashMap<Long, com.notrishabhjain.taskmind.domain.model.NotificationCapture>()
+    private val stateVersion = MutableStateFlow(0)
+    private var nextId = 1L
+
+    val all: List<com.notrishabhjain.taskmind.domain.model.NotificationCapture> get() = capturesById.values.toList()
+
+    override suspend fun insertIfAbsent(capture: com.notrishabhjain.taskmind.domain.model.NotificationCapture): com.notrishabhjain.taskmind.domain.repository.CaptureInsertOutcome {
+        val existing = capturesById.values.firstOrNull { it.idempotencyKey == capture.idempotencyKey }
+        if (existing != null) {
+            return com.notrishabhjain.taskmind.domain.repository.CaptureInsertOutcome.AlreadyCaptured(existing)
+        }
+        val stored = capture.copy(id = nextId++)
+        capturesById[stored.id] = stored
+        stateVersion.value++
+        return com.notrishabhjain.taskmind.domain.repository.CaptureInsertOutcome.Inserted(stored)
+    }
+
+    override suspend fun findById(id: Long): com.notrishabhjain.taskmind.domain.model.NotificationCapture? =
+        capturesById[id]
+
+    override suspend fun findByIdempotencyKey(idempotencyKey: String): com.notrishabhjain.taskmind.domain.model.NotificationCapture? =
+        capturesById.values.firstOrNull { it.idempotencyKey == idempotencyKey }
+
+    override suspend fun update(capture: com.notrishabhjain.taskmind.domain.model.NotificationCapture) {
+        require(capturesById.containsKey(capture.id)) { "No capture ${capture.id} to update" }
+        capturesById[capture.id] = capture
+        stateVersion.value++
+    }
+
+    override fun observeByState(state: com.notrishabhjain.taskmind.domain.model.CaptureState): Flow<List<com.notrishabhjain.taskmind.domain.model.NotificationCapture>> = flow {
+        stateVersion.value
+        emit(
+            capturesById.values
+                .filter { it.state == state }
+                .sortedBy { it.createdAt.toEpochMilli() }
+        )
+    }
+}
+
 class FakeActivityLogRepository : ActivityLogRepository {
 
     val entries = mutableListOf<ActivityLogEntry>()

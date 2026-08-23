@@ -1,12 +1,14 @@
 package com.notrishabhjain.taskmind.data.mapper
 
 import com.notrishabhjain.taskmind.data.db.entity.ActivityLogEntity
+import com.notrishabhjain.taskmind.data.db.entity.NotificationCaptureEntity
 import com.notrishabhjain.taskmind.data.db.entity.ProjectEntity
 import com.notrishabhjain.taskmind.data.db.entity.ReviewItemEntity
 import com.notrishabhjain.taskmind.data.db.entity.TagEntity
 import com.notrishabhjain.taskmind.data.db.entity.TaskEntity
 import com.notrishabhjain.taskmind.domain.model.ActivityCategory
 import com.notrishabhjain.taskmind.domain.model.ActivityLogEntry
+import com.notrishabhjain.taskmind.domain.model.CaptureState
 import com.notrishabhjain.taskmind.domain.model.InferenceOrigin
 import com.notrishabhjain.taskmind.domain.model.Priority
 import com.notrishabhjain.taskmind.domain.model.Project
@@ -142,6 +144,64 @@ internal fun ProjectEntity.toDomain(): Project = Project(
     id = id,
     name = name,
     nameKey = nameKey
+)
+
+internal fun NotificationCapture.toEntity(): NotificationCaptureEntity = NotificationCaptureEntity(
+    id = id,
+    idempotencyKey = idempotencyKey,
+    sourcePackage = sourcePackage,
+    sourceAppLabel = sourceAppLabel,
+    notificationKey = notificationKey,
+    notificationId = notificationId,
+    notificationTag = notificationTag,
+    postTime = postTime.toEpochMilli(),
+    title = title,
+    text = text,
+    bigText = bigText,
+    subText = subText,
+    infoText = infoText,
+    conversationTitle = conversationTitle,
+    category = category,
+    channelLabel = channelLabel,
+    canonicalSourceText = canonicalSourceText,
+    contentHash = contentHash,
+    sourceRef = sourceRef,
+    state = state.name,
+    retryCount = retryCount,
+    lastError = lastError,
+    resultingTaskId = resultingTaskId,
+    processedAt = processedAt?.toEpochMilli(),
+    createdAt = createdAt.toEpochMilli(),
+    updatedAt = updatedAt.toEpochMilli()
+)
+
+internal fun NotificationCaptureEntity.toDomain(): NotificationCapture = NotificationCapture(
+    id = id,
+    idempotencyKey = idempotencyKey,
+    sourcePackage = sourcePackage,
+    sourceAppLabel = sourceAppLabel,
+    notificationKey = notificationKey,
+    notificationId = notificationId,
+    notificationTag = notificationTag,
+    postTime = Instant.ofEpochMilli(postTime),
+    title = title,
+    text = text,
+    bigText = bigText,
+    subText = subText,
+    infoText = infoText,
+    conversationTitle = conversationTitle,
+    category = category,
+    channelLabel = channelLabel,
+    canonicalSourceText = canonicalSourceText,
+    contentHash = contentHash,
+    sourceRef = sourceRef,
+    state = parseEnum(state, "CaptureState"),
+    retryCount = retryCount,
+    lastError = lastError,
+    resultingTaskId = resultingTaskId,
+    processedAt = processedAt?.let(Instant::ofEpochMilli),
+    createdAt = Instant.ofEpochMilli(createdAt),
+    updatedAt = Instant.ofEpochMilli(updatedAt)
 )
 
 internal fun TagEntity.toDomain(): Tag = Tag(

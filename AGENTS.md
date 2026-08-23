@@ -112,6 +112,7 @@ Pinned in `gradle/libs.versions.toml` (single source of truth for versions):
 | Jetpack Compose | BOM 2026.08.00 | ui, material3, tooling via BOM |
 | Room | 2.8.4 | runtime + ktx; compiler via KSP |
 | KSP | 2.3.11 | Runs Room's annotation processor under built-in Kotlin |
+| Notification capture persistence | DB v2 | `notification_captures` table added via `MIGRATION_1_2`; `exportSchema` stays `false` until a JDK-capable baseline (v1+v2 JSON) can be generated and committed — the hand-written migration in `data/db/Migrations.kt` is the schema artifact of record for v1→v2 |
 | compileSdk / targetSdk | 37 / 36 | minSdk 26 (Android 8.0+); java.time usable without desugaring |
 | JVM target | 17 | Set once in `compileOptions`; built-in Kotlin follows it |
 | Unit tests | JUnit 4.13.2 | JVM-only tests in `app/src/test` |

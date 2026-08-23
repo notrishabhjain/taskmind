@@ -2,13 +2,16 @@ package com.notrishabhjain.taskmind.di
 
 import android.content.Context
 import androidx.room.Room
+import com.notrishabhjain.taskmind.data.db.MIGRATION_1_2
 import com.notrishabhjain.taskmind.data.db.TaskMindDatabase
 import com.notrishabhjain.taskmind.data.repository.RoomActivityLogRepository
+import com.notrishabhjain.taskmind.data.repository.RoomNotificationCaptureRepository
 import com.notrishabhjain.taskmind.data.repository.RoomProjectTagRepository
 import com.notrishabhjain.taskmind.data.repository.RoomReviewRepository
 import com.notrishabhjain.taskmind.data.repository.RoomTaskRepository
 import com.notrishabhjain.taskmind.domain.intake.TaskIntakeService
 import com.notrishabhjain.taskmind.domain.repository.ActivityLogRepository
+import com.notrishabhjain.taskmind.domain.repository.NotificationCaptureRepository
 import com.notrishabhjain.taskmind.domain.repository.ProjectTagRepository
 import com.notrishabhjain.taskmind.domain.repository.ReviewRepository
 import com.notrishabhjain.taskmind.domain.repository.TaskRepository
@@ -23,7 +26,9 @@ class AppContainer(context: Context) {
         context.applicationContext,
         TaskMindDatabase::class.java,
         TaskMindDatabase.NAME
-    ).build()
+    )
+        .addMigrations(MIGRATION_1_2)
+        .build()
 
     val timeProvider: TimeProvider = SystemTimeProvider()
 
@@ -36,6 +41,9 @@ class AppContainer(context: Context) {
 
     val projectTagRepository: ProjectTagRepository =
         RoomProjectTagRepository(database.projectTagDao(), timeProvider)
+
+    val notificationCaptureRepository: NotificationCaptureRepository =
+        RoomNotificationCaptureRepository(database.notificationCaptureDao())
 
     val taskIntakeService: TaskIntakeService = TaskIntakeService(
         taskRepository = taskRepository,

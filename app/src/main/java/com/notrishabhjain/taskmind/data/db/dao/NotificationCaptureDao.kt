@@ -1,0 +1,30 @@
+package com.notrishabhjain.taskmind.data.db.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.notrishabhjain.taskmind.data.db.entity.NotificationCaptureEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface NotificationCaptureDao {
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(entity: NotificationCaptureEntity): Long
+
+    @Query("SELECT * FROM notification_captures WHERE id = :id LIMIT 1")
+    suspend fun findById(id: Long): NotificationCaptureEntity?
+
+    @Query("SELECT * FROM notification_captures WHERE idempotencyKey = :idempotencyKey LIMIT 1")
+    suspend fun findByIdempotencyKey(idempotencyKey: String): NotificationCaptureEntity?
+
+    @Update
+    suspend fun update(entity: NotificationCaptureEntity)
+
+    @Query(
+        "SELECT * FROM notification_captures WHERE state = :state ORDER BY createdAt ASC, id ASC"
+    )
+    fun observeByState(state: String): Flow<List<NotificationCaptureEntity>>
+}
