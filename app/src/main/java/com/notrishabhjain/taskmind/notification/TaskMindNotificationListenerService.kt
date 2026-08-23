@@ -64,7 +64,6 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
             )
             return
         }
-
         val incoming = NotificationCanonicalizer.toCapture(
             input,
             capturedAt = container.timeProvider.now()
@@ -81,8 +80,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
                     appendCaptureEvent(
                         ActivityCategory.CAPTURE_VERSIONED,
                         "Updated notification captured as a new version",
-                        detail = "previous capture #${existingLatest!!.id}",
-                        taskId = null
+                        detail = "previous capture #${existingLatest!!.id}"
                     )
                 }
             }
@@ -92,8 +90,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
                     appendCaptureEvent(
                         ActivityCategory.CAPTURE_DUPLICATE,
                         "Duplicate delivery of an already captured notification ignored",
-                        detail = "existing capture #${result.existing.id}",
-                        taskId = null
+                        detail = "existing capture #${result.existing.id}"
                     )
                 }
         }

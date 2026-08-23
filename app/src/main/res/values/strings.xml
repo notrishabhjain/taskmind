@@ -103,6 +103,9 @@
     <string name="category_evidence_failed">Evidence not verified</string>
     <string name="category_processing_failed">Processing failed</string>
     <string name="category_retry_scheduled">Retry scheduled</string>
+    <string name="category_capture_ignored">Notification ignored</string>
+    <string name="category_capture_duplicate">Duplicate notification</string>
+    <string name="category_capture_versioned">Notification updated</string>
 
     <string name="notification_access_label">Notification access</string>
     <string name="notification_access_enabled">Enabled</string>

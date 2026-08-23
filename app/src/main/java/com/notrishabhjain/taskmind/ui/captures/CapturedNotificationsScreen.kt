@@ -21,6 +21,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -186,9 +189,9 @@ private fun CaptureDetailContent(
                 DetailField(stringResource(R.string.captures_field_notification_key), current.notificationKey)
                 DetailField(stringResource(R.string.captures_field_notification_id), current.notificationId?.toString())
                 DetailField(stringResource(R.string.captures_field_tag), current.notificationTag)
-                DetailField(stringResource(R.string.captures_field_post_time), formatMillis(current.postTime))
-                DetailField(stringResource(R.string.captures_field_created), formatMillis(current.createdAt))
-                DetailField(stringResource(R.string.captures_field_updated), formatMillis(current.updatedAt))
+                DetailField(stringResource(R.string.captures_field_post_time), formatMillis(current.postTime.toEpochMilli()))
+                DetailField(stringResource(R.string.captures_field_created), formatMillis(current.createdAt.toEpochMilli()))
+                DetailField(stringResource(R.string.captures_field_updated), formatMillis(current.updatedAt.toEpochMilli()))
             }
 
             DetailSection(stringResource(R.string.captures_section_content)) {
@@ -209,7 +212,7 @@ private fun CaptureDetailContent(
                 DetailField(stringResource(R.string.captures_field_retry_count), current.retryCount.toString())
                 DetailField(stringResource(R.string.captures_field_last_error), current.lastError)
                 DetailField(stringResource(R.string.captures_field_resulting_task_id), current.resultingTaskId?.toString())
-                DetailField(stringResource(R.string.captures_field_processed_at), current.processedAt?.let(::formatMillis))
+                DetailField(stringResource(R.string.captures_field_processed_at), current.processedAt?.toEpochMilli()?.let(::formatMillis))
             }
 
             DetailSection(stringResource(R.string.captures_section_integrity)) {

@@ -39,4 +39,7 @@ fun categoryLabelRes(category: ActivityCategory): Int = when (category) {
     ActivityCategory.EVIDENCE_VALIDATION_FAILED -> R.string.category_evidence_failed
     ActivityCategory.PROCESSING_FAILED -> R.string.category_processing_failed
     ActivityCategory.RETRY_SCHEDULED -> R.string.category_retry_scheduled
+    ActivityCategory.CAPTURE_IGNORED -> R.string.category_capture_ignored
+    ActivityCategory.CAPTURE_DUPLICATE -> R.string.category_capture_duplicate
+    ActivityCategory.CAPTURE_VERSIONED -> R.string.category_capture_versioned
 }
