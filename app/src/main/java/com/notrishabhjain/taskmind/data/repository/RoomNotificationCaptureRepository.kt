@@ -19,7 +19,7 @@ class RoomNotificationCaptureRepository(
         if (newId != -1L) {
             return CaptureInsertOutcome.Inserted(requireNotNull(loadById(newId)))
         }
-        val existing = notificationCaptureDao.findByIdempotencyKey(capture.idempotencyKey)
+        val existing = notificationCaptureDao.findByIdempotencyKey(capture.idempotencyKey)?.toDomain()
             ?: throw IllegalStateException(
                 "Insert reported a duplicate capture but no row exists for key ${capture.idempotencyKey}"
             )
