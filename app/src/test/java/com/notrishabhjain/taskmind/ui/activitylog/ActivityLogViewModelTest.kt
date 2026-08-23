@@ -7,7 +7,10 @@ import java.time.Instant
 import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -40,6 +43,12 @@ class ActivityLogViewModelTest {
         zoneId = ZoneOffset.UTC
     )
 
+    private fun TestScope.collectInBackground(vm: ActivityLogViewModel) {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.uiState.collect {}
+        }
+    }
+
     private fun entry(id: Long, atMillis: Long, message: String): ActivityLogEntry =
         ActivityLogEntry(
             id = id,
@@ -57,6 +66,7 @@ class ActivityLogViewModelTest {
         logs.append(entry(3, 2_000L, "middle"))
 
         val vm = viewModel(limit = 10)
+        collectInBackground(vm)
         advanceUntilIdle()
 
         assertEquals(
@@ -71,6 +81,7 @@ class ActivityLogViewModelTest {
         repeat(5) { index -> logs.append(entry(index.toLong(), index * 1_000L, "event $index")) }
 
         val vm = viewModel(limit = 3)
+        collectInBackground(vm)
         advanceUntilIdle()
 
         assertEquals(
@@ -93,6 +104,7 @@ class ActivityLogViewModelTest {
         )
 
         val vm = viewModel(limit = 10)
+        collectInBackground(vm)
         advanceUntilIdle()
 
         val row = vm.uiState.value.rows.single()

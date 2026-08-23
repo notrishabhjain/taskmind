@@ -18,12 +18,14 @@ import com.notrishabhjain.taskmind.domain.model.Priority
 import com.notrishabhjain.taskmind.domain.model.ReviewItem
 import com.notrishabhjain.taskmind.domain.model.ReviewStatus
 import com.notrishabhjain.taskmind.domain.model.SourceType
-import com.notrishabhjain.taskmind.domain.model.Task
 import com.notrishabhjain.taskmind.domain.service.ReviewService
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -61,6 +63,12 @@ class ReviewInboxViewModelTest {
         timeProvider = time
     )
 
+    private fun TestScope.collectInBackground(vm: ReviewInboxViewModel) {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.uiState.collect {}
+        }
+    }
+
     private fun pendingReview(sourceRef: String, title: String): ReviewItem = ReviewItem(
         displayTitle = title,
         titleKey = title.lowercase(),
@@ -81,17 +89,22 @@ class ReviewInboxViewModelTest {
         reviews.insert(pendingReview("wa:3", "Third suggestion"))
 
         val vm = viewModel()
+        collectInBackground(vm)
         advanceUntilIdle()
 
-        val titles = vm.uiState.value.rows.map { it.title }
-        assertEquals(listOf("Third suggestion", "First suggestion"), titles)
+        assertEquals(
+            listOf("Third suggestion", "First suggestion"),
+            vm.uiState.value.rows.map { it.title }
+        )
         assertTrue(vm.uiState.value.rows.none { it.title == "Second suggestion" })
     }
 
     @Test
     fun `accept removes item from pending inbox`() = runTest(scheduler) {
-        val item = reviews.insert(pendingReview("wa:9", "Pay electricity bill"))
+        reviews.insert(pendingReview("wa:9", "Pay electricity bill"))
+
         val vm = viewModel()
+        collectInBackground(vm)
         advanceUntilIdle()
 
         vm.onAcceptClicked(vm.uiState.value.rows.single())
@@ -100,13 +113,15 @@ class ReviewInboxViewModelTest {
         assertTrue(vm.uiState.value.rows.isEmpty())
         assertNull(vm.uiState.value.busyItemId)
         assertEquals(1, tasks.size)
-        assertEquals(ReviewStatus.ACCEPTED, reviews.findById(item.id)!!.status)
+        assertEquals(ReviewStatus.ACCEPTED, reviews.findById(1L)!!.status)
     }
 
     @Test
     fun `dismiss removes item from pending inbox`() = runTest(scheduler) {
         reviews.insert(pendingReview("wa:10", "Water plants"))
+
         val vm = viewModel()
+        collectInBackground(vm)
         advanceUntilIdle()
 
         vm.onDismissClicked(vm.uiState.value.rows.single())
@@ -136,6 +151,7 @@ class ReviewInboxViewModelTest {
         reviews.insert(pendingReview("wa:dup", "existing TASK"))
 
         val vm = viewModel()
+        collectInBackground(vm)
         advanceUntilIdle()
 
         vm.onAcceptClicked(vm.uiState.value.rows.single())
