@@ -19,15 +19,23 @@ class CaptureProcessingCoordinatorTest {
 
     private val time = FixedTimeProvider(start = 1_000_000L)
     private val captures = FakeNotificationCaptureRepository()
-    private val logs = FakeActivityLogRepository()
+    private val activityLog = FakeActivityLogRepository()
     private val tags = com.notrishabhjain.taskmind.domain.intake.FakeProjectTagRepository()
 
     private var processorResult: CaptureProcessingResult =
         CaptureProcessingResult.Deferred("not implemented")
 
-    private val processor = object : NotificationCaptureProcessor {
+    private var processor: NotificationCaptureProcessor = object : NotificationCaptureProcessor {
         override suspend fun process(capture: NotificationCapture): CaptureProcessingResult =
             processorResult
+    }
+
+    private class ThrowingProcessor(
+        private val cause: Exception
+    ) : NotificationCaptureProcessor {
+        override suspend fun process(
+            capture: NotificationCapture
+        ): CaptureProcessingResult = throw cause
     }
 
     @Before
@@ -160,11 +168,7 @@ class CaptureProcessingCoordinatorTest {
     @Test
     fun `cancellation propagates without changing state`() = runBlocking {
         seed("k-cancel")
-        processorResult = object : NotificationCaptureProcessor {
-            override suspend fun process(capture: NotificationCapture): CaptureProcessingResult {
-                throw CancellationException("worker cancelled")
-            }
-        }
+        processor = ThrowingProcessor(CancellationException("worker cancelled"))
 
         var cancelled = false
         try {
@@ -182,11 +186,7 @@ class CaptureProcessingCoordinatorTest {
     @Test
     fun `unexpected processor exception becomes retryable`() = runBlocking {
         seed("k-bug")
-        processorResult = object : NotificationCaptureProcessor {
-            override suspend fun process(capture: NotificationCapture): CaptureProcessingResult {
-                throw NullPointerException("programming bug")
-            }
-        }
+        processor = ThrowingProcessor(NullPointerException("programming bug"))
 
         coordinator().runBatch()
 
