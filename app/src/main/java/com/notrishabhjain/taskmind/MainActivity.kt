@@ -4,6 +4,7 @@ import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -212,9 +213,12 @@ private fun rememberAppContainer(): AppContainer {
 }
 
 private fun isNotificationAccessGranted(context: Context): Boolean {
-    val component = ComponentName(context, TaskMindNotificationListenerService::class.java)
     val notificationManager = context.getSystemService(NotificationManager::class.java)
-    return notificationManager?.isNotificationListenerAccessGranted(component) ?: false
+        ?: return false
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) return false
+
+    val component = ComponentName(context, TaskMindNotificationListenerService::class.java)
+    return notificationManager.isNotificationListenerAccessGranted(component)
 }
 
 @Composable
