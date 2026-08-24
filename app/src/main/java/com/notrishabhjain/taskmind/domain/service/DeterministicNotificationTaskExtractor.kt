@@ -21,7 +21,7 @@ import java.time.ZonedDateTime
  *  +0.05 imperative sentence start
  *  -0.15 very short content (< 15 characters of canonical text)
  *  -0.20 question form
- *  -0.10 boilerplate-heavy input (> 40% of the sentence stripped)
+ *  -0.10 payment-template clutter (amounts/fillers stripped by the pay template)
  *
  * Routing thresholds are owned exclusively by the intake funnel's
  * ConfidenceGate; this class never decides create/review/reject itself.
@@ -83,7 +83,7 @@ class DeterministicNotificationTaskExtractor : NotificationTaskExtractor {
         if (title.startsWithVerb) score += WEIGHT_IMPERATIVE
         if (collapsed.length < SHORT_CONTENT_CHARS) score -= WEIGHT_SHORT_CONTENT
         if (title.questionForm) score -= WEIGHT_QUESTION_FORM
-        if (title.strippedRatio > BOILERPLATE_RATIO) score -= WEIGHT_BOILERPLATE
+        if (title.boilerplateClutter) score -= WEIGHT_BOILERPLATE
 
         val confidence = Math.round(score.coerceIn(0.0, 1.0) * 100) / 100.0
 
@@ -130,7 +130,7 @@ class DeterministicNotificationTaskExtractor : NotificationTaskExtractor {
     private data class TitleDerivation(
         val value: String,
         val words: Int,
-        val strippedRatio: Double,
+        val boilerplateClutter: Boolean,
         val startsWithVerb: Boolean,
         val questionForm: Boolean,
         val detectedVerb: String?
@@ -155,29 +155,43 @@ class DeterministicNotificationTaskExtractor : NotificationTaskExtractor {
         }
 
         if (tokens.isEmpty()) {
-            return TitleDerivation("", 0, 1.0, startsWithVerb = false, questionForm = questionForm, detectedVerb = null)
+            return TitleDerivation(
+                "",
+                0,
+                boilerplateClutter = false,
+                startsWithVerb = false,
+                questionForm = questionForm,
+                detectedVerb = null
+            )
         }
 
         val explicitVerb = ACTION_VERBS_SORTED.firstOrNull { verb ->
             tokens.any { it.lower == verb || it.lower.startsWith(verb) }
         }
         val paymentTemplate = explicitVerb == null && PAYMENT_OBJECT_REGEX.containsMatchIn(cleanedLower)
+        var clutterRemoved = false
         if (paymentTemplate) {
+            val beforeFilter = tokens.size
             tokens = listOf(TitleToken("Pay", "pay")) + tokens.filter { token ->
                 token.lower !in PAYMENT_NON_OBJECT_TOKENS && !AMOUNT_REGEX.matches(token.lower)
             }
+            clutterRemoved = tokens.size < beforeFilter
         }
+
+        // Imperative start means the first remaining task token is an action
+        // verb — a verb buried mid-sentence ("Can you check...") does not count.
+        val startsWithVerb = paymentTemplate ||
+            ACTION_VERBS_SORTED.any { verb -> tokens.first().lower.startsWith(verb) }
 
         val title = tokens.joinToString(" ") { it.orig }
             .replaceFirstChar { it.uppercaseChar() }
             .trimEnd(*TITLE_EDGE_CHARS)
-        val ratio = 1.0 - title.length.toDouble() / cleaned.length.coerceAtLeast(1)
         val detectedVerb = explicitVerb ?: if (paymentTemplate) "pay" else null
         return TitleDerivation(
             value = title,
             words = tokens.size,
-            strippedRatio = ratio,
-            startsWithVerb = explicitVerb != null || paymentTemplate,
+            boilerplateClutter = clutterRemoved,
+            startsWithVerb = startsWithVerb,
             questionForm = questionForm,
             detectedVerb = detectedVerb
         )
@@ -399,7 +413,6 @@ class DeterministicNotificationTaskExtractor : NotificationTaskExtractor {
         private const val MIN_SENTENCE_CHARS = 4
         private const val MIN_TITLE_WORDS = 2
         private const val SHORT_CONTENT_CHARS = 15
-        private const val BOILERPLATE_RATIO = 0.40
         private const val DAYS_PER_WEEK = 7
         private const val NEXT_WEEK_DAYS = 7L
 
