@@ -116,9 +116,19 @@ class CaptureProcessingCoordinator(
             summary.copy(rejected = summary.rejected + 1)
         }
 
-        is CaptureProcessingResult.Deferred ->
+        is CaptureProcessingResult.Deferred -> {
             moveTo(claimed, CaptureState.DEFERRED, lastError = result.reason?.take(200), at = now)
-                .let { summary.copy(deferredCount = summary.deferredCount + 1) }
+            activityLogRepository.append(
+                entry(
+                    ActivityCategory.CAPTURE_DEFERRED,
+                    "Notification capture deferred",
+                    detail = "capture #${claimed.id} ${result.reason.orEmpty()}".trim(),
+                    taskId = claimed.id,
+                    at = now
+                )
+            )
+            summary.copy(deferredCount = summary.deferredCount + 1)
+        }
 
         is CaptureProcessingResult.RetryableFailure ->
             scheduleRetry(claimed, result.reason, summary, now)
@@ -127,18 +137,20 @@ class CaptureProcessingCoordinator(
             failPermanently(claimed, result.reason, summary, now)
     }
 
-    private fun s2(rejected: Int): Int = rejected + 1
-
     private suspend fun scheduleRetry(
         claimed: NotificationCapture,
         reason: String?,
         summary: CaptureBatchSummary,
         now: Instant
     ): CaptureBatchSummary {
-        NotificationCaptureStateMachine.requireValidTransition(claimed.state, CaptureState.RETRY_PENDING)
         val nextRetryCount = claimed.retryCount + 1
         val updatedAt = timeProvider.now()
 
+        if (retryPolicy.isRetryExhausted(nextRetryCount)) {
+            return exhaustRetries(claimed, reason, nextRetryCount, updatedAt, summary, now)
+        }
+
+        NotificationCaptureStateMachine.requireValidTransition(claimed.state, CaptureState.RETRY_PENDING)
         captures.update(
             claimed.copy(
                 state = CaptureState.RETRY_PENDING,
@@ -157,6 +169,35 @@ class CaptureProcessingCoordinator(
             )
         )
         return summary.copy(retried = summary.retried + 1, hasRetryableWork = true)
+    }
+
+    private suspend fun exhaustRetries(
+        claimed: NotificationCapture,
+        reason: String?,
+        nextRetryCount: Int,
+        updatedAt: Instant,
+        summary: CaptureBatchSummary,
+        now: Instant
+    ): CaptureBatchSummary {
+        NotificationCaptureStateMachine.requireValidTransition(claimed.state, CaptureState.FAILED)
+        captures.update(
+            claimed.copy(
+                state = CaptureState.FAILED,
+                retryCount = nextRetryCount,
+                lastError = reason,
+                updatedAt = updatedAt
+            )
+        )
+        activityLogRepository.append(
+            entry(
+                ActivityCategory.PROCESSING_FAILED,
+                "Notification capture failed permanently after $nextRetryCount attempts",
+                detail = "capture #${claimed.id} retries=$nextRetryCount",
+                taskId = claimed.id,
+                at = now
+            )
+        )
+        return summary.copy(failed = summary.failed + 1)
     }
 
     private suspend fun failPermanently(
@@ -191,6 +232,18 @@ class CaptureProcessingCoordinator(
         // Unexpected errors stay retryable so no capture is lost to a bug; only
         // the safe exception class name is recorded, never notification content.
         val nextRetryCount = claimed.retryCount + 1
+
+        if (retryPolicy.isRetryExhausted(nextRetryCount)) {
+            return exhaustRetries(
+                claimed = claimed,
+                reason = unexpected::class.simpleName,
+                nextRetryCount = nextRetryCount,
+                updatedAt = timeProvider.now(),
+                summary = summary,
+                now = now
+            )
+        }
+
         val updatedAt = timeProvider.now()
         captures.update(
             claimed.copy(

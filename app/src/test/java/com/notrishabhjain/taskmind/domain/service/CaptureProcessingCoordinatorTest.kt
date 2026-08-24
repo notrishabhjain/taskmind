@@ -10,7 +10,6 @@ import java.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -97,7 +96,7 @@ class CaptureProcessingCoordinatorTest {
         assertEquals(1, summary.deferredCount)
         val stored = captures.findById(1L)!!
         assertEquals(CaptureState.DEFERRED, stored.state)
-        assertTrue(stored.lastError!!.contains("deferred"))
+        assertEquals("not implemented", stored.lastError)
         assertEquals(1, activityLog.countOf(ActivityCategory.CAPTURE_DEFERRED))
     }
 
@@ -108,7 +107,8 @@ class CaptureProcessingCoordinatorTest {
 
         val summary = coordinator().runBatch()
 
-        assertEquals(1, summary.skipped)
+        assertEquals(0, summary.attempted)
+        assertEquals(0, summary.skipped)
         assertEquals(CaptureState.PROCESSED, captures.findById(1L)!!.state)
         assertEquals(0, activityLog.countOf(ActivityCategory.PROCESSING_FAILED))
     }
@@ -124,7 +124,10 @@ class CaptureProcessingCoordinatorTest {
         assertEquals(CaptureState.RETRY_PENDING, stored.state)
         assertEquals(2, stored.retryCount)
         assertEquals("transient io", stored.lastError)
-        assertEquals(1, activityLog.countOf(ActivityCategory.RETRY_SCHEDULED))
+        val scheduledRetries = activityLog.entries.count { entry ->
+            entry.category == ActivityCategory.RETRY_SCHEDULED && entry.taskId == stored.id
+        }
+        assertEquals(1, scheduledRetries)
     }
 
     @Test
@@ -138,6 +141,82 @@ class CaptureProcessingCoordinatorTest {
         assertEquals(CaptureState.FAILED, stored.state)
         assertEquals(4, stored.retryCount)
         assertEquals(1, activityLog.countOf(ActivityCategory.PROCESSING_FAILED))
+    }
+
+    @Test
+    fun `repeated retryable failures exhaust retries then fail without scheduling more`() = runBlocking {
+        seed("k-exhaust", state = CaptureState.QUEUED)
+        processorResult = CaptureProcessingResult.RetryableFailure("transient")
+        val coordinator = coordinator(maxRetries = 2)
+
+        coordinator.runBatch()
+        var stored = captures.findById(1L)!!
+        assertEquals(CaptureState.RETRY_PENDING, stored.state)
+        assertEquals(1, stored.retryCount)
+
+        coordinator.runBatch()
+        stored = captures.findById(1L)!!
+        assertEquals(CaptureState.RETRY_PENDING, stored.state)
+        assertEquals(2, stored.retryCount)
+
+        val finalSummary = coordinator.runBatch()
+        stored = captures.findById(1L)!!
+        assertEquals(CaptureState.FAILED, stored.state)
+        assertEquals(3, stored.retryCount)
+        assertEquals("transient", stored.lastError)
+        assertEquals(1, finalSummary.failed)
+        assertEquals(0, finalSummary.retried)
+        assertEquals(
+            2,
+            activityLog.entries.count { entry ->
+                entry.category == ActivityCategory.RETRY_SCHEDULED && entry.taskId == 1L
+            }
+        )
+        assertEquals(1, activityLog.countOf(ActivityCategory.PROCESSING_FAILED))
+    }
+
+    @Test
+    fun `repeated unexpected exceptions exhaust retries then fail without scheduling more`() = runBlocking {
+        seed("k-bug-exhaust", state = CaptureState.QUEUED)
+        processor = ThrowingProcessor(NullPointerException("programming bug"))
+        val coordinator = coordinator(maxRetries = 2)
+
+        coordinator.runBatch()
+        var stored = captures.findById(1L)!!
+        assertEquals(CaptureState.RETRY_PENDING, stored.state)
+        assertEquals(1, stored.retryCount)
+        assertEquals("NullPointerException", stored.lastError)
+
+        coordinator.runBatch()
+        stored = captures.findById(1L)!!
+        assertEquals(CaptureState.RETRY_PENDING, stored.state)
+        assertEquals(2, stored.retryCount)
+
+        val finalSummary = coordinator.runBatch()
+        stored = captures.findById(1L)!!
+        assertEquals(CaptureState.FAILED, stored.state)
+        assertEquals(3, stored.retryCount)
+        assertEquals("NullPointerException", stored.lastError)
+        assertEquals(1, finalSummary.failed)
+        assertEquals(0, finalSummary.retried)
+
+        val postFailure = coordinator.runBatch()
+        assertEquals(0, postFailure.attempted)
+
+        assertEquals(
+            2,
+            activityLog.entries.count { entry ->
+                entry.category == ActivityCategory.PROCESSING_FAILED &&
+                    entry.taskId == 1L && entry.message.contains("scheduled for retry")
+            }
+        )
+        assertEquals(
+            1,
+            activityLog.entries.count { entry ->
+                entry.category == ActivityCategory.PROCESSING_FAILED &&
+                    entry.message.contains("failed permanently")
+            }
+        )
     }
 
     @Test
@@ -179,7 +258,8 @@ class CaptureProcessingCoordinatorTest {
 
         assertTrue(cancelled)
         val stored = captures.findById(1L)!!
-        assertEquals(CaptureState.CAPTURED, stored.state)
+        assertEquals(CaptureState.PROCESSING, stored.state)
+        assertEquals(0, stored.retryCount)
         assertEquals(0, activityLog.countOf(ActivityCategory.PROCESSING_FAILED))
     }
 
@@ -197,7 +277,7 @@ class CaptureProcessingCoordinatorTest {
     }
 
     @Test
-    fun `stale processing rows are recovered to queued`() = runBlocking {
+    fun `stale processing rows are recovered and drained in the same run`() = runBlocking {
         val stale = seed("k-stale", state = CaptureState.PROCESSING)
         captures.update(stale.copy(updatedAt = Instant.ofEpochMilli(100L)))
         time.advanceBy(60 * 60 * 1_000L)
@@ -205,17 +285,20 @@ class CaptureProcessingCoordinatorTest {
         val summary = coordinator().runBatch()
 
         assertEquals(1, summary.recovered)
-        assertEquals(CaptureState.QUEUED, captures.findById(stale.id)!!.state)
+        assertEquals(1, summary.attempted)
+        assertEquals(CaptureState.DEFERRED, captures.findById(stale.id)!!.state)
     }
 
     @Test
     fun `fresh processing rows are not recovered as stale`() = runBlocking {
-        seed("k-fresh", state = CaptureState.PROCESSING)
+        val fresh = seed("k-fresh", state = CaptureState.PROCESSING)
+        captures.update(fresh.copy(updatedAt = time.now().minusSeconds(60)))
 
         val summary = coordinator().runBatch()
 
         assertEquals(0, summary.recovered)
-        assertEquals(CaptureState.PROCESSING, captures.findById(1L)!!.state)
+        assertEquals(0, summary.attempted)
+        assertEquals(CaptureState.PROCESSING, captures.findById(fresh.id)!!.state)
     }
 
     @Test
