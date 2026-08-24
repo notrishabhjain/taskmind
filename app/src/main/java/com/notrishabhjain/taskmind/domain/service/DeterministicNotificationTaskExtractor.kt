@@ -52,7 +52,7 @@ class DeterministicNotificationTaskExtractor : NotificationTaskExtractor {
         }
 
         val sentences = splitSentences(raw)
-        val today = LocalDate.ofInstant(now, zone)
+        val today = now.atZone(zone).toLocalDate()
 
         var bestIndex = -1
         var bestSignal = SentenceSignal.NONE
