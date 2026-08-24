@@ -30,7 +30,7 @@ interface NotificationCaptureDao {
 
     @Query(
         "SELECT * FROM notification_captures " +
-            "WHERE state IN ('CAPTURED', 'QUEUED', 'RETRY_PENDING') " +
+            "WHERE state IN ('CAPTURED', 'QUEUED', 'RETRY_PENDING', 'DEFERRED') " +
             "ORDER BY createdAt ASC, id ASC LIMIT :limit"
     )
     suspend fun selectDueForProcessing(limit: Int): List<NotificationCaptureEntity>
@@ -38,7 +38,7 @@ interface NotificationCaptureDao {
     @Query(
         "UPDATE notification_captures " +
             "SET state = 'PROCESSING', updatedAt = :now " +
-            "WHERE id = :id AND state IN ('CAPTURED', 'QUEUED', 'RETRY_PENDING')"
+            "WHERE id = :id AND state IN ('CAPTURED', 'QUEUED', 'RETRY_PENDING', 'DEFERRED')"
     )
     suspend fun claimForProcessing(id: Long, now: Long): Int
 

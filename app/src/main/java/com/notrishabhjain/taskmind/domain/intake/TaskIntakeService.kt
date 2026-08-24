@@ -260,7 +260,8 @@ class TaskIntakeService(
         task.sourceRef?.let { append(" ref=").append(it) }
         task.inferenceOrigin?.let { append(" origin=").append(it.name) }
         task.confidence?.let { append(" confidence=").append(it) }
-        task.evidence?.let { append(" evidence=\"").append(it).append("\"") }
+        // Evidence is intentionally omitted: for captured notifications it can
+        // quote the original message body, which must not enter the Activity Log.
     }
 
     private fun confidenceDetail(confidence: Double?): String =

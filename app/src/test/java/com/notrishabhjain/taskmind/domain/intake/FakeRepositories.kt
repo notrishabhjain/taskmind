@@ -30,7 +30,7 @@ class FixedTimeProvider(start: Long = 0L) : TimeProvider {
     }
 }
 
-class FakeTaskRepository : TaskRepository {
+open class FakeTaskRepository : TaskRepository {
 
     data class Observation(
         val query: TaskQuery,
@@ -183,7 +183,8 @@ class FakeNotificationCaptureRepository : com.notrishabhjain.taskmind.domain.rep
         val current = capturesById[id] ?: return false
         val eligible = current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.CAPTURED ||
             current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.QUEUED ||
-            current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.RETRY_PENDING
+            current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.RETRY_PENDING ||
+            current.state == com.notrishabhjain.taskmind.domain.model.CaptureState.DEFERRED
         if (!eligible) return false
         capturesById[id] = current.copy(
             state = com.notrishabhjain.taskmind.domain.model.CaptureState.PROCESSING,
@@ -197,7 +198,8 @@ class FakeNotificationCaptureRepository : com.notrishabhjain.taskmind.domain.rep
             .filter {
                 it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.CAPTURED ||
                     it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.QUEUED ||
-                    it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.RETRY_PENDING
+                    it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.RETRY_PENDING ||
+                    it.state == com.notrishabhjain.taskmind.domain.model.CaptureState.DEFERRED
             }
             .sortedBy { it.createdAt.toEpochMilli() }
             .take(limit)

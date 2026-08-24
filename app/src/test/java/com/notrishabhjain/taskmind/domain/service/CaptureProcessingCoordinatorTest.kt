@@ -235,12 +235,13 @@ class CaptureProcessingCoordinatorTest {
     @Test
     fun `processed outcome records processedAt`() = runBlocking {
         seed("k-ok")
-        processorResult = CaptureProcessingResult.Processed
+        processorResult = CaptureProcessingResult.Processed(resultingTaskId = 7L)
 
         coordinator().runBatch()
 
         val stored = captures.findById(1L)!!
         assertEquals(CaptureState.PROCESSED, stored.state)
+        assertEquals(7L, stored.resultingTaskId!!)
         assertEquals(time.now().toEpochMilli(), stored.processedAt!!.toEpochMilli())
     }
 
@@ -313,14 +314,16 @@ class CaptureProcessingCoordinatorTest {
     }
 
     @Test
-    fun `second run finds nothing new after all captures reached deferred`() = runBlocking {
+    fun `deferred captures are re-attempted on subsequent drain runs`() = runBlocking {
         seed("k-once")
         val coordinator = coordinator()
         coordinator.runBatch()
+        assertEquals(CaptureState.DEFERRED, captures.findById(1L)!!.state)
 
         val second = coordinator.runBatch()
 
-        assertEquals(0, second.attempted)
+        assertEquals(1, second.attempted)
+        assertEquals(CaptureState.DEFERRED, captures.findById(1L)!!.state)
         assertEquals(1, captures.all.size)
     }
 }

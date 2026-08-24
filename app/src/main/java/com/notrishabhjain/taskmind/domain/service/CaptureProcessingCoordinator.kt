@@ -96,7 +96,7 @@ class CaptureProcessingCoordinator(
         now: Instant
     ): CaptureBatchSummary = when (val result = processor.process(claimed)) {
         is CaptureProcessingResult.Processed ->
-            moveTo(claimed, CaptureState.PROCESSED, lastError = null, at = now)
+            moveTo(claimed, CaptureState.PROCESSED, lastError = null, at = now, resultingTaskId = result.resultingTaskId)
                 .let { summary.copy(processed = summary.processed + 1) }
 
         is CaptureProcessingResult.ReviewRequired ->
@@ -269,14 +269,16 @@ class CaptureProcessingCoordinator(
         claimed: NotificationCapture,
         to: CaptureState,
         lastError: String?,
-        at: Instant
+        at: Instant,
+        resultingTaskId: Long? = null
     ): NotificationCapture {
         NotificationCaptureStateMachine.requireValidTransition(claimed.state, to)
         val updated = claimed.copy(
             state = to,
             lastError = lastError,
             updatedAt = at,
-            processedAt = if (to == CaptureState.PROCESSED) at else claimed.processedAt
+            processedAt = if (to == CaptureState.PROCESSED) at else claimed.processedAt,
+            resultingTaskId = resultingTaskId ?: claimed.resultingTaskId
         )
         captures.update(updated)
         return updated

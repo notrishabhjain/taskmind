@@ -47,8 +47,23 @@ class AppContainer(context: Context) {
     val notificationCaptureRepository: NotificationCaptureRepository =
         RoomNotificationCaptureRepository(database.notificationCaptureDao())
 
+    val taskIntakeService: TaskIntakeService = TaskIntakeService(
+        taskRepository = taskRepository,
+        reviewRepository = reviewRepository,
+        activityLogRepository = activityLogRepository,
+        projectTagRepository = projectTagRepository,
+        timeProvider = timeProvider
+    )
+
+    private val notificationTaskExtractor: com.notrishabhjain.taskmind.domain.service.NotificationTaskExtractor =
+        com.notrishabhjain.taskmind.domain.service.DeterministicNotificationTaskExtractor()
+
     val notificationCaptureProcessor: com.notrishabhjain.taskmind.domain.service.NotificationCaptureProcessor =
-        com.notrishabhjain.taskmind.data.processor.DeferredNotificationCaptureProcessor()
+        com.notrishabhjain.taskmind.data.processor.NotificationTaskProcessor(
+            extractor = notificationTaskExtractor,
+            taskIntakeService = taskIntakeService,
+            timeProvider = timeProvider
+        )
 
     val captureProcessingCoordinator: com.notrishabhjain.taskmind.domain.service.CaptureProcessingCoordinator =
         com.notrishabhjain.taskmind.domain.service.CaptureProcessingCoordinator(
@@ -67,14 +82,6 @@ class AppContainer(context: Context) {
         com.notrishabhjain.taskmind.data.worker.CaptureProcessingWorker.factory {
             captureProcessingCoordinator
         }
-
-    val taskIntakeService: TaskIntakeService = TaskIntakeService(
-        taskRepository = taskRepository,
-        reviewRepository = reviewRepository,
-        activityLogRepository = activityLogRepository,
-        projectTagRepository = projectTagRepository,
-        timeProvider = timeProvider
-    )
 
     val taskService: TaskService = TaskService(
         taskRepository = taskRepository,

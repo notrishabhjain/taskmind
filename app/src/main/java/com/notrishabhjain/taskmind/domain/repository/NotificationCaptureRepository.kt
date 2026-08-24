@@ -33,9 +33,11 @@ interface NotificationCaptureRepository {
     ): NotificationCapture?
 
     /**
-     * Atomically moves an eligible capture (CAPTURED / QUEUED / RETRY_PENDING)
-     * into PROCESSING. Returns false when the capture is missing, already
-     * terminal, or claimed by another worker — the caller must then skip it.
+     * Atomically moves an eligible capture (CAPTURED / QUEUED / RETRY_PENDING /
+     * DEFERRED) into PROCESSING. Returns false when the capture is missing,
+     * already terminal, or claimed by another worker — the caller must then
+     * skip it. DEFERRED is eligible so pre-extraction captures are never
+     * stranded after an extraction processor becomes available.
      */
     suspend fun claimForProcessing(id: Long, now: Instant): Boolean
 
