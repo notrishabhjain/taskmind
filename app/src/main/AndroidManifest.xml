@@ -47,8 +47,7 @@
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
                 android:value="androidx.startup"
-                tools:node="remove"
-                tools:ignore="RemoveWorkManagerInitializer" />
+                tools:node="remove" />
         </provider>
     </application>
 

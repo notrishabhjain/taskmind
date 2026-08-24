@@ -1,9 +1,11 @@
 package com.notrishabhjain.taskmind
 
+import android.annotation.SuppressLint
 import android.app.Application
 import androidx.work.Configuration
 import com.notrishabhjain.taskmind.di.AppContainer
 
+@SuppressLint("RemoveWorkManagerInitializer")
 class TaskMindApplication : Application(), Configuration.Provider {
 
     lateinit var container: AppContainer
