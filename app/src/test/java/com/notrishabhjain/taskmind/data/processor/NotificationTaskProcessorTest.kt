@@ -15,6 +15,7 @@ import com.notrishabhjain.taskmind.domain.model.SourceType
 import com.notrishabhjain.taskmind.domain.repository.DuplicateTaskException
 import com.notrishabhjain.taskmind.domain.service.CaptureProcessingCoordinator
 import com.notrishabhjain.taskmind.domain.service.CaptureProcessingResult
+import com.notrishabhjain.taskmind.domain.service.DeterministicNotificationTaskExtractor
 import com.notrishabhjain.taskmind.domain.service.NotificationExtraction
 import com.notrishabhjain.taskmind.domain.service.NotificationExtractionOutcome
 import com.notrishabhjain.taskmind.domain.service.NotificationTaskExtractor
