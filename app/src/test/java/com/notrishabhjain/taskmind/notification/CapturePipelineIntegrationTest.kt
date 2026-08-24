@@ -14,7 +14,7 @@ import com.notrishabhjain.taskmind.domain.repository.CaptureInsertOutcome
 import com.notrishabhjain.taskmind.domain.service.CaptureProcessingCoordinator
 import com.notrishabhjain.taskmind.domain.service.DeterministicNotificationTaskExtractor
 import java.time.ZoneId
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -63,7 +63,7 @@ class CapturePipelineIntegrationTest {
     )
 
     /** Mirrors TaskMindNotificationListenerService.handlePosted using JVM seams. */
-    private fun deliver(input: RawNotificationInput): CaptureRelation {
+    private suspend fun deliver(input: RawNotificationInput): CaptureRelation {
         val filter = filter()
         if (filter.decide(input) == CaptureDecision.IGNORE) return CaptureRelation.FRESH_CAPTURE
         val incoming = NotificationCanonicalizer.toCapture(input, capturedAt = time.now())
@@ -80,7 +80,7 @@ class CapturePipelineIntegrationTest {
         buildCoordinator().runBatch()
     }
 
-    private fun FakeActivityLogRepository.appendVersionEvent(previousId: Long?) {
+    private suspend fun FakeActivityLogRepository.appendVersionEvent(previousId: Long?) {
         append(
             com.notrishabhjain.taskmind.domain.model.ActivityLogEntry(
                 category = ActivityCategory.CAPTURE_VERSIONED,
@@ -93,7 +93,7 @@ class CapturePipelineIntegrationTest {
     }
 
     @Test
-    fun `whatsapp action notification flows end to end into a task`() = runBlocking {
+    fun `whatsapp action notification flows end to end into a task`() = runTest {
         assertEquals(CaptureDecision.ACCEPT, filter().decide(whatsappInput))
         assertEquals(CaptureRelation.FRESH_CAPTURE, deliver(whatsappInput))
 
@@ -110,7 +110,7 @@ class CapturePipelineIntegrationTest {
     }
 
     @Test
-    fun `exact duplicate delivery never creates a second capture or task`() = runBlocking {
+    fun `exact duplicate delivery never creates a second capture or task`() = runTest {
         assertEquals(CaptureRelation.FRESH_CAPTURE, deliver(whatsappInput))
         drain()
 
@@ -123,7 +123,7 @@ class CapturePipelineIntegrationTest {
     }
 
     @Test
-    fun `notification update versions the capture and resolves to the existing task`() = runBlocking {
+    fun `notification update versions the capture and resolves to the existing task`() = runTest {
         deliver(whatsappInput)
         drain()
 
@@ -176,7 +176,7 @@ class CapturePipelineIntegrationTest {
     }
 
     @Test
-    fun `informational otp notification ends rejected through the full pipeline`() = runBlocking {
+    fun `informational otp notification ends rejected through the full pipeline`() = runTest {
         deliver(whatsappInput.copy(notificationKey = "k-otp", text = "Your OTP is 482913."))
         drain()
 
