@@ -45,9 +45,9 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
         Log.i(TAG, "onListenerConnected")
     }
 
-    override fun onListenerDisconnected(reason: Int) {
+    override fun onListenerDisconnected() {
         container.notificationListenerConnected.value = false
-        Log.i(TAG, "onListenerDisconnected reason=$reason -> requesting rebind")
+        Log.i(TAG, "onListenerDisconnected -> requesting rebind")
         requestRebind(ComponentName(this, TaskMindNotificationListenerService::class.java))
     }
 

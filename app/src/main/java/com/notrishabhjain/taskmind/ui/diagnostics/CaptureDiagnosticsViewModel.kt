@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkInfo
+import com.notrishabhjain.taskmind.R
 import com.notrishabhjain.taskmind.TaskMindApplication
 import com.notrishabhjain.taskmind.domain.model.CaptureState
 import kotlinx.coroutines.flow.SharingStarted
