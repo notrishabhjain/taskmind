@@ -86,7 +86,10 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
                 }
             }
 
-            is CaptureInsertOutcome.AlreadyCaptured ->
+            is CaptureInsertOutcome.AlreadyCaptured -> {
+                // Stranded CAPTURED rows (e.g. from an earlier build whose drain
+                // never ran) must still be rescued when their content redelivers.
+                container.captureWorkScheduler.scheduleDrain()
                 if (relation == CaptureRelation.NEW_VERSION || relation == CaptureRelation.EXACT_DUPLICATE) {
                     appendCaptureEvent(
                         ActivityCategory.CAPTURE_DUPLICATE,
@@ -94,6 +97,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
                         detail = "existing capture #${result.existing.id}"
                     )
                 }
+            }
         }
     }
 

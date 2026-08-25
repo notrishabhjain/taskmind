@@ -16,9 +16,12 @@ import java.util.concurrent.TimeUnit
 class CaptureWorkScheduler(private val workManager: WorkManager) {
 
     fun scheduleDrain() {
+        // REPLACE (not KEEP): a persisted, backed-off drain chain from an
+        // earlier build/failure must never silently block fresh enqueues —
+        // otherwise notifications stay stuck in CAPTURED indefinitely.
         workManager.enqueueUniqueWork(
             DRAIN_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.REPLACE,
             drainRequest()
         )
     }
@@ -26,7 +29,7 @@ class CaptureWorkScheduler(private val workManager: WorkManager) {
     fun scheduleMaintenance() {
         workManager.enqueueUniqueWork(
             MAINTENANCE_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<CaptureProcessingWorker>()
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, CaptureRetryPolicy.WORKER_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
                 .build()

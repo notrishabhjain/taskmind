@@ -79,9 +79,11 @@ class AppContainer(context: Context) {
         )
 
     val captureProcessingWorkerFactory: androidx.work.WorkerFactory =
-        com.notrishabhjain.taskmind.data.worker.CaptureProcessingWorker.factory {
-            captureProcessingCoordinator
-        }
+        com.notrishabhjain.taskmind.data.worker.CaptureProcessingWorker.factory(
+            coordinatorProvider = { captureProcessingCoordinator },
+            activityLogRepository = activityLogRepository,
+            timeProvider = timeProvider
+        )
 
     val taskService: TaskService = TaskService(
         taskRepository = taskRepository,
