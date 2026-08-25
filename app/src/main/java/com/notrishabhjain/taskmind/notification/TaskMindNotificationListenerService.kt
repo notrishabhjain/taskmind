@@ -1,8 +1,10 @@
 package com.notrishabhjain.taskmind.notification
 
 import android.app.Notification
+import android.content.ComponentName
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.util.Log
 import com.notrishabhjain.taskmind.di.AppContainer
 import com.notrishabhjain.taskmind.domain.model.ActivityCategory
 import com.notrishabhjain.taskmind.domain.repository.CaptureInsertOutcome
@@ -20,29 +22,39 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
 
     private lateinit var captureFilter: CaptureFilter
 
+    private var postedCount = 0
+
     override fun onCreate() {
         super.onCreate()
         container = (applicationContext as com.notrishabhjain.taskmind.TaskMindApplication).container
         captureFilter = CaptureFilter(
             NotificationCapturePolicy(selfPackage = packageName)
         )
+        Log.i(TAG, "service onCreate")
     }
 
     override fun onDestroy() {
         container.notificationListenerConnected.value = false
         scope.cancel()
+        Log.i(TAG, "service onDestroy")
         super.onDestroy()
     }
 
     override fun onListenerConnected() {
         container.notificationListenerConnected.value = true
+        Log.i(TAG, "onListenerConnected")
     }
 
-    override fun onListenerDisconnected() {
+    override fun onListenerDisconnected(reason: Int) {
         container.notificationListenerConnected.value = false
+        Log.i(TAG, "onListenerDisconnected reason=$reason -> requesting rebind")
+        requestRebind(ComponentName(this, TaskMindNotificationListenerService::class.java))
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        postedCount++
+        // Metadata only: source package and callback count, never content.
+        Log.i(TAG, "onNotificationPosted #$postedCount package=${sbn.packageName}")
         scope.launch {
             try {
                 handlePosted(sbn)
@@ -76,7 +88,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
 
         when (val result = container.notificationCaptureRepository.insertIfAbsent(incoming)) {
             is CaptureInsertOutcome.Inserted -> {
-                container.captureWorkScheduler.scheduleDrain()
+                container.captureWorkScheduler.scheduleDrain("notification-insert")
                 if (relation == CaptureRelation.NEW_VERSION) {
                     appendCaptureEvent(
                         ActivityCategory.CAPTURE_VERSIONED,
@@ -89,7 +101,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
             is CaptureInsertOutcome.AlreadyCaptured -> {
                 // Stranded CAPTURED rows (e.g. from an earlier build whose drain
                 // never ran) must still be rescued when their content redelivers.
-                container.captureWorkScheduler.scheduleDrain()
+                container.captureWorkScheduler.scheduleDrain("notification-duplicate")
                 if (relation == CaptureRelation.NEW_VERSION || relation == CaptureRelation.EXACT_DUPLICATE) {
                     appendCaptureEvent(
                         ActivityCategory.CAPTURE_DUPLICATE,
@@ -177,5 +189,10 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
                 )
             }
         }
+        Log.w(TAG, "capture failed: ${e::class.java.simpleName}")
+    }
+
+    companion object {
+        private const val TAG = "TaskMindListener"
     }
 }

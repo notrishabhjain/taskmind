@@ -1,6 +1,7 @@
 package com.notrishabhjain.taskmind.data.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -32,7 +33,34 @@ class CaptureProcessingWorker(
     private val timeProvider: TimeProvider
 ) : CoroutineWorker(context, parameters) {
 
+    /**
+     * Reflection fallback used by WorkManager's default factory when the
+     * custom configuration/factory was not applied (e.g. default initializer
+     * won initialization). Dependencies resolve from the application
+     * container so the pipeline works under either initialization path.
+     */
+    constructor(context: Context, parameters: WorkerParameters) : this(
+        context,
+        parameters,
+        (context.applicationContext as com.notrishabhjain.taskmind.TaskMindApplication)
+            .container.captureProcessingCoordinator,
+        (context.applicationContext as com.notrishabhjain.taskmind.TaskMindApplication)
+            .container.activityLogRepository,
+        (context.applicationContext as com.notrishabhjain.taskmind.TaskMindApplication)
+            .container.timeProvider
+    ) {
+        creationPath = "reflection-fallback"
+        Log.w(TAG, "worker created via REFLECTION fallback (custom factory bypassed)")
+    }
+
+    private var creationPath = "custom-factory"
+
+    init {
+        Log.i(TAG, "worker constructed via $creationPath")
+    }
+
     override suspend fun doWork(): Result {
+        Log.i(TAG, "doWork entered attempt=$runAttemptCount")
         logDrainStarted()
         val summary = try {
             coordinator.runBatch()
@@ -41,6 +69,13 @@ class CaptureProcessingWorker(
         } catch (unexpected: Exception) {
             // Batch-level catastrophe; rows keep their last durable state and
             // WM exponential backoff reschedules the drain.
+            activityLogRepository.append(
+                entry(
+                    category = ActivityCategory.PROCESSING_FAILED,
+                    message = "Capture drain batch failed",
+                    detail = "attempt=$runAttemptCount class=${unexpected::class.java.simpleName}"
+                )
+            )
             return Result.retry()
         }
         logDrainFinished(summary)
@@ -48,6 +83,7 @@ class CaptureProcessingWorker(
         if (summary.hasRetryableWork && runAttemptCount < MAX_WM_ATTEMPTS_BEFORE_BACKOFF_RESET) {
             // Domain-level RETRY_PENDING was already persisted; WM backoff
             // spaces out the next attempt.
+            Log.i(TAG, "doWork exit -> retry (hasRetryableWork)")
             return Result.retry()
         }
 
@@ -55,6 +91,7 @@ class CaptureProcessingWorker(
             scheduleFollowUpDrain()
         }
 
+        Log.i(TAG, "doWork exit -> success")
         return Result.success()
     }
 
@@ -64,7 +101,7 @@ class CaptureProcessingWorker(
             entry(
                 category = ActivityCategory.CAPTURE_QUEUED,
                 message = "Capture drain started",
-                detail = "attempt=$runAttemptCount"
+                detail = "attempt=$runAttemptCount createdVia=$creationPath worker=CaptureProcessingWorker"
             )
         )
     }
@@ -99,6 +136,8 @@ class CaptureProcessingWorker(
 
     companion object {
 
+        private const val TAG = "TaskMindCaptureWork"
+
         /** Must match CaptureProcessingCoordinator.DEFAULT_BATCH_SIZE semantics. */
         const val DRAIN_BATCH_SIZE = 25
 
@@ -122,14 +161,16 @@ class CaptureProcessingWorker(
                     appContext: Context,
                     workerClassName: String,
                     workerParameters: WorkerParameters
-                ): ListenableWorker =
-                    CaptureProcessingWorker(
+                ): ListenableWorker {
+                    Log.i(TAG, "custom factory creating $workerClassName")
+                    return CaptureProcessingWorker(
                         appContext,
                         workerParameters,
                         coordinatorProvider(),
                         activityLogRepository,
                         timeProvider
                     )
+                }
             }
     }
 }

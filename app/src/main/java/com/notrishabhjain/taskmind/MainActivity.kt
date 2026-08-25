@@ -83,6 +83,7 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
     var editorOpen by rememberSaveable { mutableStateOf(false) }
     var editorTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
     var capturesOpen by rememberSaveable { mutableStateOf(false) }
+    var diagnosticsOpen by rememberSaveable { mutableStateOf(false) }
     var notificationAccessEnabled by rememberSaveable { mutableStateOf(false) }
 
     BackHandler(enabled = editorOpen) {
@@ -94,6 +95,10 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
         capturesOpen = false
     }
 
+    BackHandler(enabled = diagnosticsOpen) {
+        diagnosticsOpen = false
+    }
+
     val tasksViewModel: TasksViewModel = viewModel(factory = TasksViewModel.Factory)
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -103,7 +108,7 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
                 Lifecycle.Event.ON_RESUME -> {
                     tasksViewModel.onHostResumed()
                     notificationAccessEnabled = isNotificationAccessGranted(context)
-                    container.captureWorkScheduler.scheduleDrain()
+                    container.captureWorkScheduler.scheduleDrain("app-open")
                 }
 
                 Lifecycle.Event.ON_PAUSE -> tasksViewModel.onHostPaused()
@@ -124,6 +129,16 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
         CapturedNotificationsScreen(
             viewModel = capturesViewModel,
             onBack = { capturesOpen = false }
+        )
+        return
+    }
+
+    if (diagnosticsOpen) {
+        val diagnosticsViewModel: com.notrishabhjain.taskmind.ui.diagnostics.CaptureDiagnosticsViewModel =
+            viewModel(factory = com.notrishabhjain.taskmind.ui.diagnostics.CaptureDiagnosticsViewModel.Factory)
+        com.notrishabhjain.taskmind.ui.diagnostics.CaptureDiagnosticsScreen(
+            viewModel = diagnosticsViewModel,
+            onBack = { diagnosticsOpen = false }
         )
         return
     }
@@ -219,7 +234,8 @@ private fun TaskMindRoot(container: AppContainer = rememberAppContainer()) {
                         viewModel(factory = ActivityLogViewModel.Factory)
                     ActivityLogScreen(
                         viewModel = activityViewModel,
-                        onOpenCapturedNotifications = { capturesOpen = true }
+                        onOpenCapturedNotifications = { capturesOpen = true },
+                        onOpenCaptureDiagnostics = { diagnosticsOpen = true }
                     )
                 }
             }

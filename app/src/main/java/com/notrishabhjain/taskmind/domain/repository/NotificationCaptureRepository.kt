@@ -25,6 +25,9 @@ interface NotificationCaptureRepository {
 
     fun observeRecentCaptures(limit: Int): Flow<List<NotificationCapture>>
 
+    /** Live per-state capture counts for diagnostics. */
+    fun observeStateCounts(): Flow<Map<CaptureState, Int>>
+
     fun observeCapture(id: Long): Flow<NotificationCapture?>
 
     suspend fun findLatestByIdentity(

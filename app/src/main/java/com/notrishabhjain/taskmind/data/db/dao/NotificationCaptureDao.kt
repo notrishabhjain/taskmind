@@ -8,8 +8,15 @@ import androidx.room.Update
 import com.notrishabhjain.taskmind.data.db.entity.NotificationCaptureEntity
 import kotlinx.coroutines.flow.Flow
 
+data class StateCount(val state: String, val count: Int)
+
+
 @Dao
 interface NotificationCaptureDao {
+
+    /** Diagnostic aggregate: live per-state capture counts. */
+    @Query("SELECT state AS state, COUNT(*) AS count FROM notification_captures GROUP BY state")
+    fun observeStateCounts(): Flow<List<StateCount>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(entity: NotificationCaptureEntity): Long

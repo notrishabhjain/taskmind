@@ -165,6 +165,11 @@ class FakeNotificationCaptureRepository : com.notrishabhjain.taskmind.domain.rep
         )
     }
 
+    override fun observeStateCounts(): Flow<Map<com.notrishabhjain.taskmind.domain.model.CaptureState, Int>> = flow {
+        stateVersion.value
+        emit(capturesById.values.groupingBy { it.state }.eachCount())
+    }
+
     override fun observeCapture(id: Long): Flow<com.notrishabhjain.taskmind.domain.model.NotificationCapture?> = flow {
         stateVersion.value
         emit(capturesById[id])

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,6 +38,7 @@ import com.notrishabhjain.taskmind.R
 fun ActivityLogScreen(
     viewModel: ActivityLogViewModel,
     onOpenCapturedNotifications: () -> Unit = {},
+    onOpenCaptureDiagnostics: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -47,6 +49,12 @@ fun ActivityLogScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.activity_title)) },
                 actions = {
+                    IconButton(onClick = onOpenCaptureDiagnostics) {
+                        Icon(
+                            imageVector = Icons.Filled.Build,
+                            contentDescription = stringResource(R.string.activity_diagnostics_cd)
+                        )
+                    }
                     IconButton(onClick = onOpenCapturedNotifications) {
                         Icon(
                             imageVector = Icons.Filled.List,

@@ -44,6 +44,11 @@ class RoomNotificationCaptureRepository(
         notificationCaptureDao.observeRecentCaptures(limit)
             .map { entities -> entities.map { it.toDomain() } }
 
+    override fun observeStateCounts(): Flow<Map<CaptureState, Int>> =
+        notificationCaptureDao.observeStateCounts().map { rows ->
+            rows.associate { CaptureState.valueOf(it.state) to it.count }
+        }
+
     override fun observeCapture(id: Long): Flow<NotificationCapture?> =
         notificationCaptureDao.observeById(id).map { it?.toDomain() }
 

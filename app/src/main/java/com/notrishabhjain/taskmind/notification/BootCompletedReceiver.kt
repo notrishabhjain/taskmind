@@ -28,8 +28,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
         scope.launch {
             try {
                 val container = (context.applicationContext as com.notrishabhjain.taskmind.TaskMindApplication).container
-                container.captureWorkScheduler.scheduleDrain()
-                container.captureWorkScheduler.scheduleMaintenance()
+                container.captureWorkScheduler.scheduleDrain("boot")
+                container.captureWorkScheduler.scheduleMaintenance("boot")
             } finally {
                 pendingResult.finish()
                 scope.cancel()

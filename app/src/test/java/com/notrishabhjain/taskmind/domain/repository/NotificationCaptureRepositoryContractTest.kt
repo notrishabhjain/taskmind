@@ -112,4 +112,30 @@ class NotificationCaptureRepositoryContractTest {
         assertEquals(1, capturedRows.size)
         assertEquals("captured-a", capturedRows.single().idempotencyKey)
     }
+
+    @Test
+    fun `observeStateCounts reports live per-state counts`() = runBlocking {
+        repository.insertIfAbsent(capture(idempotencyKey = "captured-a"))
+        repository.insertIfAbsent(capture(idempotencyKey = "captured-b"))
+        repository.insertIfAbsent(
+            capture(idempotencyKey = "processed-a", state = CaptureState.PROCESSED)
+        )
+
+        val counts = repository.observeStateCounts().first()
+
+        assertEquals(2, counts[CaptureState.CAPTURED])
+        assertEquals(1, counts[CaptureState.PROCESSED])
+        assertEquals(null, counts[CaptureState.FAILED])
+    }
+
+    @Test
+    fun `observeStateCounts reacts to state updates`() = runBlocking {
+        val inserted = (repository.insertIfAbsent(capture()) as CaptureInsertOutcome.Inserted).capture
+
+        repository.update(inserted.copy(state = CaptureState.REJECTED))
+
+        val counts = repository.observeStateCounts().first()
+        assertEquals(1, counts[CaptureState.REJECTED])
+        assertEquals(null, counts[CaptureState.CAPTURED])
+    }
 }

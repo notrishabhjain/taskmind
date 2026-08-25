@@ -148,7 +148,14 @@
     <string name="captures_field_processed_at">Processed at</string>
     <string name="captures_field_content_hash">Content hash</string>
     <string name="captures_field_idempotency_key">Idempotency key</string>
-    <string name="captures_field_source_ref">Source reference</string>
+        <string name="captures_field_source_ref">Source reference</string>
+    <string name="activity_diagnostics_cd">Open capture diagnostics</string>
+    <string name="diagnostics_title">Capture diagnostics</string>
+    <string name="diagnostics_section_work">WorkManager drain</string>
+    <string name="diagnostics_section_counts">Capture states</string>
+    <string name="diagnostics_no_work">No drain work currently registered.</string>
+    <string name="diagnostics_work_state">State: %1$s</string>
+    <string name="diagnostics_work_attempts">Attempts: %1$d</string>
 
     <string name="capture_state_captured">CAPTURED</string>
     <string name="capture_state_queued">QUEUED</string>
