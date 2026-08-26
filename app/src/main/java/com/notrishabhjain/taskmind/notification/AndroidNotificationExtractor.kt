@@ -26,8 +26,14 @@ class AndroidNotificationExtractor(private val appContext: Context) {
 
         fun text(key: String): String? = extras?.getCharSequence(key)?.toString()
 
-        val messages = parseMessageBundles(extras?.getBundleArray(Notification.EXTRA_MESSAGES), historic = false)
-        val historicMessages = parseMessageBundles(extras?.getBundleArray(Notification.EXTRA_HISTORIC_MESSAGES), historic = true)
+        val messages = parseMessageBundles(
+            parcelables = extras?.getParcelableArray(Notification.EXTRA_MESSAGES),
+            historic = false
+        )
+        val historicMessages = parseMessageBundles(
+            parcelables = extras?.getParcelableArray(Notification.EXTRA_HISTORIC_MESSAGES),
+            historic = true
+        )
 
         val conversationTitle = text(Notification.EXTRA_CONVERSATION_TITLE)
         val conversation = if (messages.isNotEmpty() || historicMessages.isNotEmpty()) {
@@ -72,12 +78,17 @@ class AndroidNotificationExtractor(private val appContext: Context) {
         )
     }
 
+    /**
+     * MessagingStyle stores its messages as a Parcelable[] whose elements are
+     * Bundles carrying the stable keys "text" / "sender" / "time".
+     */
     private fun parseMessageBundles(
-        bundles: Array<android.os.Bundle>?,
+        parcelables: Array<out android.os.Parcelable>?,
         historic: Boolean
     ): List<MessageEntry> {
-        if (bundles == null) return emptyList()
-        return bundles.mapNotNull { bundle ->
+        if (parcelables == null) return emptyList()
+        return parcelables.mapNotNull { parcelable ->
+            val bundle = parcelable as? android.os.Bundle ?: return@mapNotNull null
             val text = bundle.getString(MESSAGE_KEY_TEXT)?.trim() ?: return@mapNotNull null
             MessageEntry(
                 sender = bundle.getString(MESSAGE_KEY_SENDER)?.trim()?.ifBlank { null },
