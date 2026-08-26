@@ -184,4 +184,47 @@ class CapturePipelineIntegrationTest {
         assertEquals(0, tasks.size)
         assertTrue(activityLog.entries.none { (it.message + " " + (it.detail ?: "")).contains("482913") })
     }
+
+    @Test
+    fun `messaging style v2 capture flows end to end into a clean task`() = runTest {
+        val snapshot = NotificationSnapshot(
+            packageName = "com.whatsapp",
+            notificationKey = "0|com.whatsapp|101|null|10001",
+            notificationId = 10001,
+            tag = null,
+            postTimeMs = 100L,
+            appLabel = "WhatsApp",
+            title = "Rahul",
+            text = "Please call Rahul tomorrow at 4 PM",
+            bigText = null,
+            subText = null,
+            infoText = null,
+            summaryText = null,
+            conversation = ConversationContext(
+                title = "Rahul",
+                isGroup = false,
+                messages = listOf(
+                    MessageEntry(sender = "Rahul", text = "Please call Rahul tomorrow at 4 PM", timestampMs = 42L)
+                )
+            ),
+            category = "msg",
+            channelId = "whatsapp-messages",
+            style = NotificationStyle.MESSAGING,
+            isOngoing = false,
+            groupKey = null,
+            flags = 0,
+            extrasCensus = ExtrasCensus(emptyList())
+        )
+        captures.insertIfAbsent(NotificationCanonicalizer.toCapture(snapshot, capturedAt = time.now()))
+
+        drain()
+
+        val stored = captures.findById(1L)!!
+        assertEquals(CaptureState.PROCESSED, stored.state)
+        assertNotNull(stored.resultingTaskId)
+        assertTrue(stored.canonicalSourceText.contains("MSG 42 Rahul:"))
+        val task = tasks.all.single()
+        // Sentinel/sender metadata must not leak into the task title.
+        assertTrue(!task.title.contains("MSG ") && !task.title.contains("CONVERSATION"))
+    }
 }

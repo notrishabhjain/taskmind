@@ -387,8 +387,30 @@ class DeterministicNotificationTaskExtractor : NotificationTaskExtractor {
     private fun splitSentences(raw: String): List<Sentence> =
         raw.split('\n')
             .flatMap { it.split(SENTENCE_SPLIT_REGEX) }
-            .map { Sentence(raw = collapse(it), cleaned = collapse(URL_REGEX.replace(it, " "))) }
+            .map { piece ->
+                val collapsed = collapse(piece)
+                Sentence(
+                    raw = collapsed,
+                    cleaned = collapse(stripIngestionSentinels(URL_REGEX.replace(collapsed, " ")))
+                )
+            }
             .filter { it.cleaned.length >= MIN_SENTENCE_CHARS || it.raw.length >= MIN_SENTENCE_CHARS }
+
+    /**
+     * Ingestion V2 canonical lines carry structural sentinels
+     * (CONVERSATION / MSG [ts] Sender: / TITLE: / TEXT: ...). They are
+     * metadata of the capture format, never task content, so they are removed
+     * before analysis and title derivation. Evidence keeps the full raw line.
+     */
+    private fun stripIngestionSentinels(sentence: String): String {
+        var result = sentence.trimStart(*SENTINEL_EDGE_CHARS)
+        val match = SENTINEL_PREFIX_REGEX.find(result) ?: return result
+        var remainder = result.substring(match.value.length)
+        if (match.groupValues[1] == "MSG" || match.groupValues[1] == "HISTORIC") {
+            remainder = remainder.replaceFirst(SENDER_PREFIX_REGEX, "")
+        }
+        return remainder.trim()
+    }
 
     private fun collapse(value: String): String = value.replace(WHITESPACE, " ").trim()
 
@@ -426,6 +448,11 @@ class DeterministicNotificationTaskExtractor : NotificationTaskExtractor {
         private val SENTENCE_SPLIT_REGEX = Regex("(?<=[.!?])\\s+|;")
         private val URL_REGEX = Regex("""https?://\S+|\bwww\.\S+""")
         private val AMOUNT_REGEX = Regex("""(?:₹|$|€|£)\s*[\d,]+(?:\.\d+)?|rs\.?\s*[\d,]+(?:\.\d+)?""")
+        private val SENTINEL_EDGE_CHARS = charArrayOf(' ', '-')
+        private val SENTINEL_PREFIX_REGEX = Regex(
+            "^(CONVERSATION|HISTORIC|MSG|TITLE|TEXT|BIG_TEXT|SUB_TEXT|INFO_TEXT|SUMMARY)(?:\\s+\\d{1,13})?[\\s:]*"
+        )
+        private val SENDER_PREFIX_REGEX = Regex("^[^:\\s]{1,40}:\\s*")
 
         private val OTP_REGEX = Regex("""\b(?:otp|one[\s-]?time\s+(?:password|code|pin)|verification\s+code|security\s+code)\b""")
         private val PROMO_REGEX = Regex(

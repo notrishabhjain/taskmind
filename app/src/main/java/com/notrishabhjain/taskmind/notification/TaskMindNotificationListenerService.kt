@@ -1,6 +1,5 @@
 package com.notrishabhjain.taskmind.notification
 
-import android.app.Notification
 import android.content.ComponentName
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -22,6 +21,8 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
 
     private lateinit var captureFilter: CaptureFilter
 
+    private lateinit var notificationExtractor: AndroidNotificationExtractor
+
     private var postedCount = 0
 
     override fun onCreate() {
@@ -30,6 +31,7 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
         captureFilter = CaptureFilter(
             NotificationCapturePolicy(selfPackage = packageName)
         )
+        notificationExtractor = AndroidNotificationExtractor(applicationContext)
         Log.i(TAG, "service onCreate")
     }
 
@@ -65,19 +67,33 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
     }
 
     private suspend fun handlePosted(sbn: StatusBarNotification) {
-        val input = inputOrNull(sbn) ?: return
+        val snapshot = snapshotOrNull(sbn) ?: return
 
-        val decision = captureFilter.decide(input)
+        // CaptureFilter operates on the presentation projection of the snapshot.
+        val filterInput = RawNotificationInput(
+            sourcePackage = snapshot.packageName,
+            notificationKey = snapshot.notificationKey,
+            postTimeMillis = snapshot.postTimeMs,
+            title = snapshot.title,
+            text = snapshot.text,
+            bigText = snapshot.bigText,
+            subText = snapshot.subText,
+            infoText = snapshot.infoText,
+            conversationTitle = snapshot.conversation?.title,
+            category = snapshot.category,
+            appLabel = snapshot.appLabel
+        )
+        val decision = captureFilter.decide(filterInput)
         if (decision == CaptureDecision.IGNORE) {
             appendCaptureEvent(
                 ActivityCategory.CAPTURE_IGNORED,
-                "Notification from ${input.sourcePackage} ignored by filter",
+                "Notification from ${snapshot.packageName} ignored by filter",
                 detail = null
             )
             return
         }
         val incoming = NotificationCanonicalizer.toCapture(
-            input,
+            snapshot,
             capturedAt = container.timeProvider.now()
         )
         val existingLatest = container.notificationCaptureRepository.findLatestByIdentity(
@@ -133,46 +149,13 @@ class TaskMindNotificationListenerService : NotificationListenerService() {
         // Removals are intentionally not persisted in 4B.
     }
 
-    private fun captureOrNull(sbn: StatusBarNotification): com.notrishabhjain.taskmind.domain.model.NotificationCapture? {
-        val input = inputOrNull(sbn) ?: return null
-        return NotificationCanonicalizer.toCapture(
-            input,
-            capturedAt = container.timeProvider.now()
-        )
-    }
-
-    private fun inputOrNull(sbn: StatusBarNotification): RawNotificationInput? {
-        val ownPackage = applicationContext.packageName
+    private fun snapshotOrNull(sbn: StatusBarNotification): NotificationSnapshot? {
         val sourcePackage = sbn.packageName ?: return null
-        if (NotificationCanonicalizer.isSelfNotification(sourcePackage, ownPackage)) return null
-
-        val notification = sbn.notification ?: return null
-        val extras = notification.extras
-        fun extra(key: String): String? = extras?.getCharSequence(key)?.toString()
-
-        return RawNotificationInput(
-            sourcePackage = sourcePackage,
-            notificationKey = sbn.key ?: buildString {
-                append(sourcePackage); append('|'); append(sbn.id); append('|'); append(sbn.tag)
-            },
-            postTimeMillis = sbn.postTime,
-            title = extra(Notification.EXTRA_TITLE),
-            text = extra(Notification.EXTRA_TEXT),
-            bigText = extra(Notification.EXTRA_BIG_TEXT),
-            subText = extra(Notification.EXTRA_SUB_TEXT),
-            infoText = extra(Notification.EXTRA_INFO_TEXT),
-            conversationTitle = extra(Notification.EXTRA_CONVERSATION_TITLE),
-            category = notification.category,
-            appLabel = resolveAppLabel(sourcePackage)
-        )
-    }
-
-    private fun resolveAppLabel(sourcePackage: String): String? = try {
-        packageManager.getApplicationLabel(
-            packageManager.getApplicationInfo(sourcePackage, 0)
-        )?.toString()
-    } catch (e: Exception) {
-        null
+        if (NotificationCanonicalizer.isSelfNotification(sourcePackage, applicationContext.packageName)) {
+            return null
+        }
+        if (sbn.notification == null) return null
+        return notificationExtractor.extract(sbn)
     }
 
     private fun logGenericFailure(e: Exception) {

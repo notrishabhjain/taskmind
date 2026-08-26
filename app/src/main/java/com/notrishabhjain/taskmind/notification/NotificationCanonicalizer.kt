@@ -71,6 +71,40 @@ object NotificationCanonicalizer {
         updatedAt = capturedAt
     )
 
+    /**
+     * Ingestion V2: builds the capture from the rich snapshot. Canonical text
+     * is produced by [CanonicalSourceBuilder]; hashing/idempotency/sourceRef
+     * formulas are identical to the legacy path.
+     */
+    fun toCapture(snapshot: NotificationSnapshot, capturedAt: Instant): NotificationCapture {
+        val canonicalSourceText = CanonicalSourceBuilder.build(snapshot)
+        return NotificationCapture(
+            idempotencyKey = sha256(
+                "${snapshot.packageName}|${snapshot.notificationKey}|${snapshot.postTimeMs}|$canonicalSourceText"
+            ),
+            sourcePackage = snapshot.packageName,
+            sourceAppLabel = snapshot.appLabel,
+            notificationKey = snapshot.notificationKey,
+            notificationId = snapshot.notificationId,
+            notificationTag = snapshot.tag,
+            postTime = Instant.ofEpochMilli(snapshot.postTimeMs),
+            title = snapshot.title,
+            text = snapshot.text,
+            bigText = snapshot.bigText,
+            subText = snapshot.subText,
+            infoText = snapshot.infoText,
+            conversationTitle = snapshot.conversation?.title,
+            category = snapshot.category,
+            channelLabel = snapshot.channelId,
+            canonicalSourceText = canonicalSourceText,
+            contentHash = sha256(canonicalSourceText),
+            sourceRef = "notification:${snapshot.packageName}:${snapshot.notificationKey}",
+            state = CaptureState.CAPTURED,
+            createdAt = capturedAt,
+            updatedAt = capturedAt
+        )
+    }
+
     private fun sha256(value: String): String =
         MessageDigest.getInstance("SHA-256")
             .digest(value.toByteArray(Charsets.UTF_8))
