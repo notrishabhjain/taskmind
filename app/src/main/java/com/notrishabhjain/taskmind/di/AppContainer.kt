@@ -75,7 +75,9 @@ class AppContainer(context: Context) {
 
     val captureWorkScheduler: com.notrishabhjain.taskmind.notification.CaptureWorkScheduler =
         com.notrishabhjain.taskmind.notification.CaptureWorkScheduler(
-            androidx.work.WorkManager.getInstance(context)
+            workManager = androidx.work.WorkManager.getInstance(context),
+            activityLogRepository = activityLogRepository,
+            timeProvider = timeProvider
         )
 
     val captureProcessingWorkerFactory: androidx.work.WorkerFactory =
